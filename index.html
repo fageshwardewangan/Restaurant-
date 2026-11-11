@@ -47,13 +47,17 @@
 
     <div class="bottom-bar">
         <div class="total-box">कुल बिल: ₹<span id="totalAmount">0</span></div>
-        <button class="order-btn" id="placeOrderBtn" onclick="placeOrder()">ऑर्डर करें (Place Order)</button>
+        <button class="order-btn" id="placeOrderBtn" onclick="verifyLocationAndOrder()">ऑर्डर करें (Place Order)</button>
     </div>
 
     <script>
         const FIREBASE_URL = "https://restaurent-fad84-default-rtdb.firebaseio.com/";
 
-        // URL se table number read karne ka function (Jaise: ?Table1 ya ?table=Table%201)
+        // 🛑 YAHAN APNE RESTAURANT KI GPS LOCATION SET KAREIN
+        const RESTAURANT_LAT = 20.982306; // Apne restaurant ka Latitude dalein (Example coordinates)
+        const RESTAURANT_LNG = 81.872587; // Apne restaurant ka Longitude dalein
+        const ALLOWED_RADIUS_METERS = 100; // Sirf 100 meter ke daayre ke andar se order hoga
+
         function getTableFromURL() {
             const params = new URLSearchParams(window.location.search);
             if (params.has('table')) {
@@ -63,7 +67,7 @@
             if (queryString) {
                 return decodeURIComponent(queryString.split('=')[0]);
             }
-            return "Table 1"; // Default agar URL mein kuch na ho
+            return "Table 1";
         }
 
         const currentTable = getTableFromURL();
@@ -127,7 +131,8 @@
             return total;
         }
 
-        async function placeOrder() {
+        // 1. Location Verify karne ka function
+        function verifyLocationAndOrder() {
             const customerName = document.getElementById("customerName").value.trim();
             const totalAmount = calculateTotal();
 
@@ -140,6 +145,59 @@
                 return; 
             }
 
+            if (!navigator.geolocation) {
+                alert("आपका browser Geolocation support nahi karta hai!");
+                return;
+            }
+
+            const btn = document.getElementById("placeOrderBtn");
+            btn.disabled = true;
+            btn.innerText = "location check ho rahi hai...";
+
+            // Customer ki current location nikalna
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+
+                    // Distance calculate karna (Haversine formula)
+                    const distance = calculateDistance(RESTAURANT_LAT, RESTAURANT_LNG, userLat, userLng);
+
+                    if (distance <= ALLOWED_RADIUS_METERS) {
+                        // Agar range ke andar hai toh order place hoga
+                        placeOrder();
+                    } else {
+                        alert(`आप रेस्टोरेंट परिसर से बाहर हैं! (دوری: ${Math.round(distance)} मीटर). ऑर्डर करने के लिए कृपया रेस्टोरेंट के अंदर आएं।`);
+                        btn.disabled = false;
+                        btn.innerText = "ऑर्डर करें (Place Order)";
+                    }
+                },
+                (error) => {
+                    alert("Location access deni zaroori hai order karne ke liye! Kripya GPS/Location permission on karein.");
+                    btn.disabled = false;
+                    btn.innerText = "ऑर्डर करें (Place Order)";
+                },
+                { enableHighAccuracy: true }
+            );
+        }
+
+        // Do coordinates ke beech ki doori (meters mein) nikalne ka formula
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // Earth radius in meters
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c; // Distance in meters
+        }
+
+        // 2. Original Order Placing Function
+        async function placeOrder() {
+            const customerName = document.getElementById("customerName").value.trim();
+            const totalAmount = calculateTotal();
+
             let orderedItems = [];
             menuItems.forEach(item => {
                 if (cart[item.id] > 0) {
@@ -147,7 +205,6 @@
                 }
             });
 
-            // Yahan URL se aayi hui table automatically lag jayegi
             const orderData = {
                 customerName: customerName,
                 tableNumber: currentTable,
@@ -157,7 +214,6 @@
             };
 
             const btn = document.getElementById("placeOrderBtn");
-            btn.disabled = true;
             btn.innerText = "ऑर्डर जा रहा है...";
 
             try {
