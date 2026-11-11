@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitchen Counter - Live Orders</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f6f9; color: #333; padding: 20px; }
+        header { background-color: #b71c1c; color: white; text-align: center; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        header h1 { font-size: 24px; }
+        .orders-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .order-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 5px solid #b71c1c; display: flex; flex-direction: column; justify-content: space-between; }
+        .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .table-badge { background: #ffebee; color: #b71c1c; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 14px; }
+        .customer-name { font-size: 16px; font-weight: bold; color: #444; }
+        .order-time { font-size: 12px; color: #777; margin-bottom: 10px; }
+        .item-list { list-style: none; margin-bottom: 15px; }
+        .item-list li { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #f0f0f0; font-size: 15px; }
+        .item-qty { font-weight: bold; color: #b71c1c; }
+        .order-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 12px; }
+        .total-price { font-weight: bold; font-size: 16px; }
+        .done-btn { background: #2e7d32; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .done-btn:active { background: #1b5e20; }
+        .no-orders { text-align: center; grid-column: 1 / -1; padding: 40px; color: #777; font-size: 18px; background: white; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>👨‍🍳 Kitchen Live Orders Counter</h1>
+    </header>
+
+    <div class="orders-container" id="ordersContainer">
+        <div class="no-orders">नए ऑर्डर्स का इंतज़ार है...</div>
+    </div>
+
+    <audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    <script>
+        const FIREBASE_URL = "https://restaurent-fad84-default-rtdb.firebaseio.com/";
+        let previousOrderCount = 0;
+
+        async function fetchOrders() {
+            try {
+                const response = await fetch(FIREBASE_URL + "orders.json");
+                const data = await response.json();
+                
+                const container = document.getElementById("ordersContainer");
+                container.innerHTML = "";
+
+                if (!data) {
+                    container.innerHTML = `<div class="no-orders">फिलहाल कोई नया ऑर्डर नहीं है।</div>`;
+                    previousOrderCount = 0;
+                    return;
+                }
+
+                const orderIds = Object.keys(data);
+                if (orderIds.length > previousOrderCount && previousOrderCount !== 0) {
+                    playAlertSound();
+                }
+                previousOrderCount = orderIds.length;
+
+                orderIds.forEach(orderId => {
+                    const order = data[orderId];
+                    let itemsHTML = "";
+                    if (order.items) {
+                        order.items.forEach(item => {
+                            itemsHTML += `<li><span>${item.name}</span><span class="item-qty">x ${item.quantity}</span></li>`;
+                        });
+                    }
+
+                    container.innerHTML += `
+                        <div class="order-card" id="card-${orderId}">
+                            <div>
+                                <div class="order-header">
+                                    <span class="customer-name">${order.customerName}</span>
+                                    <span class="table-badge">Table: ${order.tableNumber}</span>
+                                </div>
+                                <div class="order-time">⏰ ${order.orderTime}</div>
+                                <ul class="item-list">${itemsHTML}</ul>
+                            </div>
+                            <div class="order-footer">
+                                <span class="total-price">कुल: ₹${order.totalBill}</span>
+                                <button class="done-btn" onclick="completeOrder('${orderId}')">Order Done</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                console.error("एरर:", error);
+            }
+        }
+
+        async function completeOrder(orderId) {
+            if (confirm("क्या यह ऑर्डर पूरा हो गया है? इसे Billing Counter पर भेजें?")) {
+                try {
+                    // 1. Pehle us order ka data fetch karein jo orders mein pada hai
+                    const getRes = await fetch(FIREBASE_URL + `orders/${orderId}.json`);
+                    const orderData = await getRes.json();
+
+                    if (!orderData) {
+                        alert("ऑर्डर नहीं मिला!");
+                        return;
+                    }
+
+                    // 2. Us data ko billing node mein save karein
+                    await fetch(FIREBASE_URL + "billing.json", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(orderData)
+                    });
+
+                    // 3. Phir active orders (orders/) se delete karein
+                    const deleteRes = await fetch(FIREBASE_URL + `orders/${orderId}.json`, {
+                        method: "DELETE"
+                    });
+
+                    if (deleteRes.ok) {
+                        document.getElementById(`card-${orderId}`).remove();
+                        fetchOrders();
+                        alert("ऑर्डर सफलतापूर्वक Billing Counter पर भेज दिया गया है!");
+                    }
+                } catch (error) {
+                    alert("एरर: " + error.message);
+                }
+            }
+        }
+
+        function playAlertSound() {
+            document.getElementById("notificationSound").play().catch(e => console.log(e));
+        }
+
+        fetchOrders();
+        setInterval(fetchOrders, 5000);
+    </script>
+</body>
+</html>

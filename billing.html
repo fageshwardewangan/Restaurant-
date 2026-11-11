@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing & Payment Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f6f9; color: #333; padding: 20px; }
+        header { background-color: #007bff; color: white; text-align: center; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        header h1 { font-size: 24px; }
+        .section-title { margin: 25px 0 15px 0; font-size: 20px; color: #333; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+        .orders-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .order-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 5px solid #007bff; display: flex; flex-direction: column; justify-content: space-between; }
+        .billing-card { border-top: 5px solid #ffc107; }
+        .history-card { border-top: 5px solid #28a745; background: #fafafa; }
+        .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .table-badge { background: #e7f1ff; color: #007bff; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 14px; }
+        .customer-name { font-size: 16px; font-weight: bold; color: #444; }
+        .order-time { font-size: 12px; color: #777; margin-bottom: 10px; }
+        .item-list { list-style: none; margin-bottom: 15px; max-height: 150px; overflow-y: auto; }
+        .item-list li { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #f0f0f0; font-size: 14px; }
+        .item-qty { font-weight: bold; color: #007bff; }
+        .order-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 12px; }
+        .total-price { font-weight: bold; font-size: 16px; }
+        .btn { border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .pay-btn { background: #28a745; color: white; }
+        .pay-btn:hover { background: #218838; }
+        .print-btn { background: #17a2b8; color: white; margin-left: 5px; }
+        .print-btn:hover { background: #138496; }
+        .no-orders { text-align: center; grid-column: 1 / -1; padding: 25px; color: #777; font-size: 15px; background: white; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🧾 Billing & Payment Counter</h1>
+    </header>
+
+    <div class="container">
+        <!-- 1. Live Orders -->
+        <h2 class="section-title">⚡ Live Orders (Kitchen)</h2>
+        <div class="orders-container" id="liveOrdersContainer">
+            <div class="no-orders">लाइव ऑर्डर्स लोड हो रहे हैं...</div>
+        </div>
+
+        <!-- 2. Pending Billing -->
+        <h2 class="section-title">💳 Pending Billing & Payments</h2>
+        <div class="orders-container" id="billingOrdersContainer">
+            <div class="no-orders">पेंडिंग बिल लोड हो रहे हैं...</div>
+        </div>
+
+        <!-- 3. Payment History -->
+        <h2 class="section-title">📂 Payment History / Completed Orders</h2>
+        <div class="orders-container" id="historyOrdersContainer">
+            <div class="no-orders">हिस्ट्री लोड हो रही है...</div>
+        </div>
+    </div>
+
+    <script>
+        const FIREBASE_URL = "https://restaurent-fad84-default-rtdb.firebaseio.com/";
+
+        async function fetchBillingData() {
+            try {
+                const liveRes = await fetch(FIREBASE_URL + "orders.json");
+                const liveData = await liveRes.json();
+
+                const billingRes = await fetch(FIREBASE_URL + "billing.json");
+                const billingData = await billingRes.json();
+
+                const historyRes = await fetch(FIREBASE_URL + "history.json");
+                const historyData = await historyRes.json();
+
+                renderLive(liveData);
+                renderBilling(billingData);
+                renderHistory(historyData);
+            } catch (error) {
+                console.error("डेटा फेच करने में एरर:", error);
+            }
+        }
+
+        function renderLive(data) {
+            const container = document.getElementById("liveOrdersContainer");
+            container.innerHTML = "";
+            if (!data) {
+                container.innerHTML = `<div class="no-orders">कोई नया लाइव ऑर्डर नहीं है।</div>`;
+                return;
+            }
+            Object.keys(data).forEach(id => {
+                container.innerHTML += createCard(id, data[id], "live", false);
+            });
+        }
+
+        function renderBilling(data) {
+            const container = document.getElementById("billingOrdersContainer");
+            container.innerHTML = "";
+            if (!data) {
+                container.innerHTML = `<div class="no-orders">कोई पेंडिंग बिल नहीं है।</div>`;
+                return;
+            }
+            Object.keys(data).forEach(id => {
+                container.innerHTML += createCard(id, data[id], "billing", true);
+            });
+        }
+
+        function renderHistory(data) {
+            const container = document.getElementById("historyOrdersContainer");
+            container.innerHTML = "";
+            if (!data) {
+                container.innerHTML = `<div class="no-orders">कोई पुरानी हिस्ट्री नहीं है।</div>`;
+                return;
+            }
+            Object.keys(data).reverse().forEach(id => {
+                container.innerHTML += createCard(id, data[id], "history", false);
+            });
+        }
+
+        function renderItems(items) {
+            let html = "";
+            if (items) {
+                items.forEach(i => {
+                    html += `<li><span>${i.name} (x${i.quantity})</span><span class="item-qty">₹${i.subtotal}</span></li>`;
+                });
+            }
+            return html;
+        }
+
+        function createCard(id, order, type, showPayBtn) {
+            let cardClass = type === 'billing' ? 'billing-card' : (type === 'history' ? 'history-card' : '');
+            // Safe JSON stringification for print button
+            const itemsStr = encodeURIComponent(JSON.stringify(order.items || []));
+            
+            let actionBtn = showPayBtn ? `<button class="btn pay-btn" onclick="paymentDone('${id}')">Payment Done</button>` : '';
+            let printBtn = `<button class="btn print-btn" onclick='printBill("${order.customerName}", "${order.tableNumber}", "${order.orderTime}", JSON.parse(decodeURIComponent("${itemsStr}")), ${order.totalBill})'>Print</button>`;
+
+            return `
+                <div class="order-card ${cardClass}" id="card-${id}">
+                    <div>
+                        <div class="order-header">
+                            <span class="customer-name">${order.customerName}</span>
+                            <span class="table-badge">Table: ${order.tableNumber}</span>
+                        </div>
+                        <div class="order-time">⏰ ${order.orderTime}</div>
+                        <ul class="item-list">${renderItems(order.items)}</ul>
+                    </div>
+                    <div class="order-footer">
+                        <span class="total-price">कुल: ₹${order.totalBill}</span>
+                        <div>${actionBtn} ${printBtn}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Payment Done button logic using ID fetch
+        async function paymentDone(orderId) {
+            if (confirm("क्या इस ऑर्डर का पेमेंट पूरा हो गया है?")) {
+                try {
+                    // 1. Pehle billing node se data fetch karein
+                    const getRes = await fetch(FIREBASE_URL + `billing/${orderId}.json`);
+                    const orderData = await getRes.json();
+
+                    if (!orderData) {
+                        alert("ऑर्डर डेटा नहीं मिला!");
+                        return;
+                    }
+
+                    // 2. History node mein save karein
+                    await fetch(FIREBASE_URL + "history.json", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(orderData)
+                    });
+
+                    // 3. Billing node se delete karein
+                    const deleteRes = await fetch(FIREBASE_URL + `billing/${orderId}.json`, {
+                        method: "DELETE"
+                    });
+
+                    if (deleteRes.ok) {
+                        alert("पेमेंट सफल रहा! ऑर्डर हिस्ट्री में सेव हो गया।");
+                        fetchBillingData();
+                    }
+                } catch (error) {
+                    alert("एरर: " + error.message);
+                }
+            }
+        }
+
+        function printBill(name, table, time, items, total) {
+            const win = window.open('', '', 'height=600,width=400');
+            let rows = '';
+            items.forEach(i => {
+                rows += `<tr><td>${i.name} (${i.quantity})</td><td style="text-align: right;">₹${i.subtotal}</td></tr>`;
+            });
+            win.document.write(`
+                <html><head><title>Invoice</title><style>body{font-family:monospace;padding:10px;width:300px;margin:auto;}h2,p{text-align:center;margin:5px 0;}table{width:100%;border-collapse:collapse;margin-top:10px;}th,td{padding:5px;font-size:13px;border-bottom:1px dashed #ccc; text-align:left;}.total{font-weight:bold;font-size:15px;text-align:right;margin-top:10px;}</style></head>
+                <body>
+                    <h2>Restaurant Tax Invoice</h2><hr>
+                    <p><b>Name:</b> ${name} | <b>Table:</b> ${table}</p>
+                    <p><b>Time:</b> ${time}</p><table><tr><th>Item</th><th style="text-align:right;">Amt</th></tr>${rows}</table>
+                    <div class="total">Total: ₹${total}</div><hr><p style="text-align:center;font-size:12px;">Thank You! Visit Again.</p>
+                    <script>window.onload=function(){window.print();window.close();}<\/script>
+                </body></html>
+            `);
+            win.document.close();
+        }
+
+        fetchBillingData();
+        setInterval(fetchBillingData, 5000);
+    </script>
+</body>
+</html>

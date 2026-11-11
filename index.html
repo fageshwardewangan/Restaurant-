@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant - Veg Menu</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f6f9; color: #333; padding-bottom: 80px; }
+        header { background-color: #2e7d32; color: white; text-align: center; padding: 20px 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 100; }
+        header h1 { font-size: 28px; letter-spacing: 1px; }
+        header p { font-size: 14px; opacity: 0.9; }
+        .table-badge-header { background: #ffeb3b; color: #333; padding: 3px 12px; border-radius: 15px; font-weight: bold; display: inline-block; margin-top: 5px; font-size: 13px; }
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+        .customer-info { background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .customer-info input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+        .menu-list { display: flex; flex-direction: column; gap: 12px; }
+        .menu-item { background: white; padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #2e7d32; }
+        .item-details h3 { font-size: 18px; margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+        .veg-icon { display: inline-block; width: 14px; height: 14px; border: 2px solid #2e7d32; position: relative; }
+        .veg-icon::after { content: ''; width: 6px; height: 6px; background: #2e7d32; border-radius: 50%; position: absolute; top: 2px; left: 2px; }
+        .price { font-weight: bold; color: #555; font-size: 16px; }
+        .qty-controls { display: flex; align-items: center; gap: 10px; background: #e8f5e9; padding: 5px 10px; border-radius: 8px; }
+        .qty-btn { background: #2e7d32; color: white; border: none; width: 30px; height: 30px; border-radius: 6px; font-size: 18px; cursor: pointer; font-weight: bold; }
+        .qty-count { font-size: 16px; font-weight: bold; min-width: 20px; text-align: center; }
+        .bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px 20px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+        .total-box { font-size: 18px; font-weight: bold; }
+        .total-box span { color: #2e7d32; font-size: 22px; }
+        .order-btn { background: #2e7d32; color: white; border: none; padding: 12px 25px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        .order-btn:disabled { background: #9e9e9e; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Restaurant</h1>
+        <p>Pure Veg Family Restaurant • Digital Menu</p>
+        <div class="table-badge-header" id="tableBadge">🪑 Table: Loading...</div>
+    </header>
+
+    <div class="container">
+        <div class="customer-info">
+            <input type="text" id="customerName" placeholder="आपका नाम (Customer Name)" required>
+        </div>
+        <div class="menu-list" id="menuContainer"></div>
+    </div>
+
+    <div class="bottom-bar">
+        <div class="total-box">कुल बिल: ₹<span id="totalAmount">0</span></div>
+        <button class="order-btn" id="placeOrderBtn" onclick="placeOrder()">ऑर्डर करें (Place Order)</button>
+    </div>
+
+    <script>
+        const FIREBASE_URL = "https://restaurent-fad84-default-rtdb.firebaseio.com/";
+
+        // URL se table number read karne ka function (Jaise: ?Table1 ya ?table=Table%201)
+        function getTableFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('table')) {
+                return params.get('table');
+            }
+            const queryString = window.location.search.replace('?', '');
+            if (queryString) {
+                return decodeURIComponent(queryString.split('=')[0]);
+            }
+            return "Table 1"; // Default agar URL mein kuch na ho
+        }
+
+        const currentTable = getTableFromURL();
+        document.getElementById("tableBadge").innerText = "🪑 " + currentTable;
+
+        const menuItems = [
+            { id: 1, name: "पनीर बटर मसाला (Paneer Butter Masala)", price: 220 },
+            { id: 2, name: "कड़ाही पनीर (Kadai Paneer)", price: 230 },
+            { id: 3, name: "शाही पनीर (Shahi Paneer)", price: 240 },
+            { id: 4, name: "दाल तड़का (Dal Tadka)", price: 140 },
+            { id: 5, name: "दाल मखनी (Dal Makhani)", price: 180 },
+            { id: 6, name: "मिक्स वेज (Mix Veg)", price: 170 },
+            { id: 7, name: "आलू गोभी मसाला (Aloo Gobi)", price: 150 },
+            { id: 8, name: "मटर मशरूम (Matar Mushroom)", price: 210 },
+            { id: 9, name: "वेज बिरयानी (Veg Biryani)", price: 190 },
+            { id: 10, name: "जीरा राइस (Jeera Rice)", price: 120 },
+            { id: 11, name: "बटर नान (Butter Naan)", price: 45 },
+            { id: 12, name: "तंदूरी रोटी (Tandoori Roti)", price: 20 },
+            { id: 13, name: "वेज मंचूरियन (Veg Manchurian)", price: 160 },
+            { id: 14, name: "पनीर चिल्ली (Paneer Chilli)", price: 200 },
+            { id: 15, name: "गुलाब जामुन - 2 पीस (Gulab Jamun)", price: 60 }
+        ];
+
+        let cart = {};
+
+        function renderMenu() {
+            const container = document.getElementById("menuContainer");
+            container.innerHTML = "";
+            menuItems.forEach(item => {
+                const qty = cart[item.id] || 0;
+                container.innerHTML += `
+                    <div class="menu-item">
+                        <div class="item-details">
+                            <h3><span class="veg-icon"></span> ${item.name}</h3>
+                            <div class="price">₹${item.price}</div>
+                        </div>
+                        <div class="qty-controls">
+                            <button class="qty-btn" onclick="updateQty(${item.id}, -1)">-</button>
+                            <span class="qty-count" id="qty-${item.id}">${qty}</span>
+                            <button class="qty-btn" onclick="updateQty(${item.id}, 1)">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updateQty(id, change) {
+            if (!cart[id]) cart[id] = 0;
+            cart[id] += change;
+            if (cart[id] < 0) cart[id] = 0;
+            document.getElementById(`qty-${id}`).innerText = cart[id];
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            let total = 0;
+            menuItems.forEach(item => {
+                total += item.price * (cart[item.id] || 0);
+            });
+            document.getElementById("totalAmount").innerText = total;
+            return total;
+        }
+
+        async function placeOrder() {
+            const customerName = document.getElementById("customerName").value.trim();
+            const totalAmount = calculateTotal();
+
+            if (!customerName) { 
+                alert("कृपया अपना नाम जरूर भरें!"); 
+                return; 
+            }
+            if (totalAmount === 0) { 
+                alert("कृपया कम से कम 1 आइटम चुनें!"); 
+                return; 
+            }
+
+            let orderedItems = [];
+            menuItems.forEach(item => {
+                if (cart[item.id] > 0) {
+                    orderedItems.push({ name: item.name, price: item.price, quantity: cart[item.id], subtotal: item.price * cart[item.id] });
+                }
+            });
+
+            // Yahan URL se aayi hui table automatically lag jayegi
+            const orderData = {
+                customerName: customerName,
+                tableNumber: currentTable,
+                items: orderedItems,
+                totalBill: totalAmount,
+                orderTime: new Date().toLocaleString("hi-IN")
+            };
+
+            const btn = document.getElementById("placeOrderBtn");
+            btn.disabled = true;
+            btn.innerText = "ऑर्डर जा रहा है...";
+
+            try {
+                const response = await fetch(FIREBASE_URL + "orders.json", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(orderData)
+                });
+
+                if (response.ok) {
+                    alert("आपका ऑर्डर सफलतापूर्वक भेज दिया गया है!");
+                    cart = {};
+                    document.getElementById("customerName").value = "";
+                    renderMenu();
+                    calculateTotal();
+                } else {
+                    alert("ऑर्डर भेजने में समस्या आई।");
+                }
+            } catch (error) {
+                alert("त्रुटि: " + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "ऑर्डर करें (Place Order)";
+            }
+        }
+
+        renderMenu();
+    </script>
+</body>
+</html>
