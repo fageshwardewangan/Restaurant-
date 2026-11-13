@@ -15,7 +15,25 @@
             color: #333; 
             padding-bottom: 100px; 
         }
+        <!-- Customer Info Popup Modal -->
+<div id="customerModal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+    <div style="background: white; padding: 25px; border-radius: 14px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center;">
+        <h2 style="color: #2e7d32; margin-bottom: 10px; font-size: 22px;">🌿 Shuddh Shakahari Rasoi</h2>
+        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Order karne ke liye kripya apni details darj karein.</p>
         
+        <div style="margin-bottom: 15px; text-align: left;">
+            <label style="font-size: 13px; font-weight: bold; color: #444; display: block; margin-bottom: 5px;">👤 Aapka Naam (Name):</label>
+            <input type="text" id="popupName" placeholder="उदा. Rahul Sharma" style="width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; outline: none;">
+        </div>
+
+        <div style="margin-bottom: 20px; text-align: left;">
+            <label style="font-size: 13px; font-weight: bold; color: #444; display: block; margin-bottom: 5px;">📱 Mobile Number:</label>
+            <input type="tel" id="popupPhone" placeholder="10 Anko ka mobile number" maxlength="10" style="width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; outline: none;">
+        </div>
+
+        <button onclick="saveCustomerDetails()" style="background: #2e7d32; color: white; border: none; width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(46,125,50,0.3);">Menu Dekhein & Order Karein ➔</button>
+    </div>
+</div>
         /* Header */
         header { 
             background: linear-gradient(135deg, rgba(27, 94, 32, 0.95), rgba(46, 125, 50, 0.95)); 
@@ -250,16 +268,15 @@
     </header>
     
     <div class="container">
-        <!-- Customer Name & Search Box -->
-        <div class="top-controls">
-            <div class="input-group">
-                <label for="customerName">👤 अपना नाम दर्ज करें (Enter Your Name):</label>
-                <input type="text" id="customerName" placeholder="उदा. Rahul Sharma" required>
-            </div>
-            <div class="input-group" style="margin-top: 10px;">
-                <label for="customerPhone">📱 मोबाइल नंबर (Phone Number):</label>
-                <input type="tel" id="customerPhone" placeholder="अपना 10 अंकों का मोबाइल नंबर लिखें" maxlength="10" required>
-            </div>
+        <!-- Customer Profile Display (Popup ke baad yahan details dikhengi) -->
+<div class="customer-info" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 12px; margin-bottom: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+    <div>
+        <p style="font-size: 13px; color: #777;">Welcome,</p>
+        <h4 id="displayCustomerName" style="color: #2e7d32; font-size: 16px; font-weight: bold;">-</h4>
+        <span id="displayCustomerPhone" style="font-size: 12px; color: #555;">-</span>
+    </div>
+    <button onclick="editDetails()" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer;">Badlein (Edit)</button>
+</div>
             <div class="input-group">
                 <input type="text" id="searchInput" placeholder="🔍 खाना खोजें (Search Paneer, Shake, Ice Cream...)" onkeyup="handleSearch()">
             </div>
@@ -288,17 +305,6 @@
     </div>
 
     <script>
-        // Page khulte hi check karein ki kya pehle ka naam saved hai
-window.onload = function() {
-    const savedName = localStorage.getItem("savedCustomerName");
-    const savedPhone = localStorage.getItem("savedCustomerPhone");
-    if (savedName) {
-        document.getElementById("customerName").value = savedName;
-    }
-    if (savedPhone) {
-        document.getElementById("customerPhone").value = savedPhone;
-    }
-};
         const FIREBASE_URL = "https://restaurent-fad84-default-rtdb.firebaseio.com/";
 
         const RESTAURANT_LAT = 20.982272; 
@@ -436,8 +442,8 @@ window.onload = function() {
         }
 
         function verifyLocationAndOrder() {
-            const customerName = document.getElementById("customerName").value.trim();
-const customerPhone = document.getElementById("customerPhone").value.trim();
+            const customerName = localStorage.getItem("savedCustomerName");
+const customerPhone = localStorage.getItem("savedCustomerPhone");
 
 if (!customerName) { 
     alert("कृपया अपना नाम जरूर भरें!"); 
@@ -496,7 +502,8 @@ if (!customerPhone || customerPhone.length < 10) {
         }
 
         async function placeOrder() {
-            const customerName = document.getElementById("customerName").value.trim();
+            const customerName = localStorage.getItem("savedCustomerName");
+const customerPhone = localStorage.getItem("savedCustomerPhone");
             const totalAmount = calculateTotal();
 
             let orderedItems = [];
@@ -550,6 +557,53 @@ if (!customerPhone || customerPhone.length < 10) {
         }
 
         renderMenu();
+    // Page load hote hi check karein
+window.onload = function() {
+    const savedName = localStorage.getItem("savedCustomerName");
+    const savedPhone = localStorage.getItem("savedCustomerPhone");
+
+    if (savedName && savedPhone) {
+        // Agar pehle se saved hai toh popup hata do aur display par dikhao
+        document.getElementById("customerModal").style.display = "none";
+        document.getElementById("displayCustomerName").innerText = savedName;
+        document.getElementById("displayCustomerPhone").innerText = "📱 " + savedPhone;
+    } else {
+        // Agar pehle se saved nahi hai toh popup dikhao
+        document.getElementById("customerModal").style.display = "flex";
+    }
+    renderMenu();
+};
+
+// Popup se details save karne ka function
+function saveCustomerDetails() {
+    const name = document.getElementById("popupName").value.trim();
+    const phone = document.getElementById("popupPhone").value.trim();
+
+    if (!name) {
+        alert("Kripya apna naam darj karein!");
+        return;
+    }
+    if (!phone || phone.length < 10) {
+        alert("Kripya sahi 10 anko ka mobile number darj karein!");
+        return;
+    }
+
+    // LocalStorage mein save karein
+    localStorage.setItem("savedCustomerName", name);
+    localStorage.setItem("savedCustomerPhone", phone);
+
+    // Popup chupayein aur display update karein
+    document.getElementById("customerModal").style.display = "none";
+    document.getElementById("displayCustomerName").innerText = name;
+    document.getElementById("displayCustomerPhone").innerText = "📱 " + phone;
+}
+
+// Agar customer apna naam/number badalna chahe
+function editDetails() {
+    localStorage.removeItem("savedCustomerName");
+    localStorage.removeItem("savedCustomerPhone");
+    location.reload(); // Page refresh hoga aur popup dobara khul jayega
+}
     </script>
 </body>
 </html>
