@@ -15,25 +15,7 @@
             color: #333; 
             padding-bottom: 100px; 
         }
-        <!-- Customer Info Popup Modal -->
-<div id="customerModal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
-    <div style="background: white; padding: 25px; border-radius: 14px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center;">
-        <h2 style="color: #2e7d32; margin-bottom: 10px; font-size: 22px;">🌿 Shuddh Shakahari Rasoi</h2>
-        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Order karne ke liye kripya apni details darj karein.</p>
-        
-        <div style="margin-bottom: 15px; text-align: left;">
-            <label style="font-size: 13px; font-weight: bold; color: #444; display: block; margin-bottom: 5px;">👤 Aapka Naam (Name):</label>
-            <input type="text" id="popupName" placeholder="उदा. Rahul Sharma" style="width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; outline: none;">
-        </div>
 
-        <div style="margin-bottom: 20px; text-align: left;">
-            <label style="font-size: 13px; font-weight: bold; color: #444; display: block; margin-bottom: 5px;">📱 Mobile Number:</label>
-            <input type="tel" id="popupPhone" placeholder="10 Anko ka mobile number" maxlength="10" style="width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; outline: none;">
-        </div>
-
-        <button onclick="saveCustomerDetails()" style="background: #2e7d32; color: white; border: none; width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(46,125,50,0.3);">Menu Dekhein & Order Karein ➔</button>
-    </div>
-</div>
         /* Header */
         header { 
             background: linear-gradient(135deg, rgba(27, 94, 32, 0.95), rgba(46, 125, 50, 0.95)); 
@@ -75,7 +57,6 @@
             flex-direction: column;
             gap: 12px;
         }
-        .input-group label { display: block; font-size: 13px; font-weight: bold; color: #444; margin-bottom: 5px; }
         .input-group input { 
             width: 100%; 
             padding: 11px 14px; 
@@ -261,6 +242,26 @@
 </head>
 <body>
 
+    <!-- Customer Info Popup Modal (Sahi jagah yahan body ke andar hai) -->
+    <div id="customerModal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+        <div style="background: white; padding: 25px; border-radius: 14px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center;">
+            <h2 style="color: #2e7d32; margin-bottom: 10px; font-size: 22px;">🌿 Shuddh Shakahari Rasoi</h2>
+            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Order karne ke liye kripya apni details darj karein.</p>
+            
+            <div style="margin-bottom: 15px; text-align: left;">
+                <label style="font-size: 13px; font-weight: bold; color: #444; display: block; margin-bottom: 5px;">👤 Aapka Naam (Name):</label>
+                <input type="text" id="popupName" placeholder="उदा. Rahul Sharma" style="width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; outline: none;">
+            </div>
+
+            <div style="margin-bottom: 20px; text-align: left;">
+                <label style="font-size: 13px; font-weight: bold; color: #444; display: block; margin-bottom: 5px;">📱 Mobile Number:</label>
+                <input type="tel" id="popupPhone" placeholder="10 Anko ka mobile number" maxlength="10" style="width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; outline: none;">
+            </div>
+
+            <button onclick="saveCustomerDetails()" style="background: #2e7d32; color: white; border: none; width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(46,125,50,0.3);">Menu Dekhein & Order Karein ➔</button>
+        </div>
+    </div>
+
     <header>
         <h1>🌿 Shuddh Shakahari Rasoi</h1>
         <p>Swad jo dil jeet le • Fresh & Hygienic</p>
@@ -268,15 +269,17 @@
     </header>
     
     <div class="container">
-        <!-- Customer Profile Display (Popup ke baad yahan details dikhengi) -->
-<div class="customer-info" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 12px; margin-bottom: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-    <div>
-        <p style="font-size: 13px; color: #777;">Welcome,</p>
-        <h4 id="displayCustomerName" style="color: #2e7d32; font-size: 16px; font-weight: bold;">-</h4>
-        <span id="displayCustomerPhone" style="font-size: 12px; color: #555;">-</span>
-    </div>
-    <button onclick="editDetails()" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer;">Badlein (Edit)</button>
-</div>
+        <!-- Customer Profile Display -->
+        <div class="customer-info" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 12px; margin-bottom: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+            <div>
+                <p style="font-size: 13px; color: #777;">Welcome,</p>
+                <h4 id="displayCustomerName" style="color: #2e7d32; font-size: 16px; font-weight: bold;">-</h4>
+                <span id="displayCustomerPhone" style="font-size: 12px; color: #555;">-</span>
+            </div>
+            <button onclick="editDetails()" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer;">Badlein (Edit)</button>
+        </div>
+
+        <div class="top-controls">
             <div class="input-group">
                 <input type="text" id="searchInput" placeholder="🔍 खाना खोजें (Search Paneer, Shake, Ice Cream...)" onkeyup="handleSearch()">
             </div>
@@ -328,13 +331,11 @@
 
         // Categorized Menu Items
         const menuItems = [
-            // Starters
             { id: 13, category: "Starter", name: "वेज मंचूरियन (Veg Manchurian)", price: 160, img: "https://images.unsplash.com/photo-1625394049853-2cf2c2a07c1b?w=500&auto=format&fit=crop&q=60" },
             { id: 14, category: "Starter", name: "पनीर चिल्ली (Paneer Chilli)", price: 200, img: "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=500&auto=format&fit=crop&q=60" },
             { id: 16, category: "Starter", name: "क्रिस्पी कॉर्न (Crispy Corn)", price: 150, img: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=500&auto=format&fit=crop&q=60" },
             { id: 17, category: "Starter", name: "पनीर टिक्का (Paneer Tikka)", price: 220, img: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=500&auto=format&fit=crop&q=60" },
 
-            // Main Course
             { id: 1, category: "Main Course", name: "पनीर बटर मसाला (Paneer Butter Masala)", price: 220, img: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500&auto=format&fit=crop&q=60" },
             { id: 2, category: "Main Course", name: "कड़ाही पनीर (Kadai Paneer)", price: 230, img: "https://images.unsplash.com/photo-1596797038530-2c107229654b?w=500&auto=format&fit=crop&q=60" },
             { id: 3, category: "Main Course", name: "शाही पनीर (Shahi Paneer)", price: 240, img: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500&auto=format&fit=crop&q=60" },
@@ -344,19 +345,16 @@
             { id: 7, category: "Main Course", name: "आलू गोभी मसाला (Aloo Gobi)", price: 150, img: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=500&auto=format&fit=crop&q=60" },
             { id: 8, category: "Main Course", name: "मटर मशरूम (Matar Mushroom)", price: 210, img: "https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=500&auto=format&fit=crop&q=60" },
 
-            // Breads & Rice
             { id: 9, category: "Breads & Rice", name: "वेज बिरयानी (Veg Biryani)", price: 190, img: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&auto=format&fit=crop&q=60" },
             { id: 10, category: "Breads & Rice", name: "जीरा राइस (Jeera Rice)", price: 120, img: "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=500&auto=format&fit=crop&q=60" },
             { id: 11, category: "Breads & Rice", name: "बटर नान (Butter Naan)", price: 45, img: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500&auto=format&fit=crop&q=60" },
             { id: 12, category: "Breads & Rice", name: "तंदूरी रोटी (Tandoori Roti)", price: 20, img: "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500&auto=format&fit=crop&q=60" },
 
-            // Shakes
             { id: 18, category: "Shakes", name: "चॉकलेट शेक (Chocolate Shake)", price: 110, img: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=500&auto=format&fit=crop&q=60" },
             { id: 19, category: "Shakes", name: "ओरियो शेक (Oreo Shake)", price: 130, img: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=500&auto=format&fit=crop&q=60" },
             { id: 20, category: "Shakes", name: "मैंगो शेक (Mango Shake)", price: 100, img: "https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=500&auto=format&fit=crop&q=60" },
             { id: 21, category: "Shakes", name: "कोल्ड कॉफी (Cold Coffee)", price: 90, img: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=500&auto=format&fit=crop&q=60" },
 
-            // Ice Cream & Sweets
             { id: 15, category: "Ice Cream & Sweets", name: "गुलाब जामुन - 2 पीस (Gulab Jamun)", price: 60, img: "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=500&auto=format&fit=crop&q=60" },
             { id: 22, category: "Ice Cream & Sweets", name: "वेनिला आइसक्रीम (Vanilla Ice Cream)", price: 70, img: "https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=500&auto=format&fit=crop&q=60" },
             { id: 23, category: "Ice Cream & Sweets", name: "चॉकलेट आइसक्रीम (Chocolate Ice Cream)", price: 85, img: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=500&auto=format&fit=crop&q=60" },
@@ -366,6 +364,49 @@
         let cart = {};
         let selectedCategory = "All";
         let searchQuery = "";
+
+        // Page load hote hi check karein
+        window.onload = function() {
+            const savedName = localStorage.getItem("savedCustomerName");
+            const savedPhone = localStorage.getItem("savedCustomerPhone");
+
+            if (savedName && savedPhone) {
+                document.getElementById("customerModal").style.display = "none";
+                document.getElementById("displayCustomerName").innerText = savedName;
+                document.getElementById("displayCustomerPhone").innerText = "📱 " + savedPhone;
+            } else {
+                document.getElementById("customerModal").style.display = "flex";
+            }
+            renderMenu();
+        };
+
+        // Popup se details save karne ka function
+        function saveCustomerDetails() {
+            const name = document.getElementById("popupName").value.trim();
+            const phone = document.getElementById("popupPhone").value.trim();
+
+            if (!name) {
+                alert("Kripya apna naam darj karein!");
+                return;
+            }
+            if (!phone || phone.length < 10) {
+                alert("Kripya sahi 10 anko ka mobile number darj karein!");
+                return;
+            }
+
+            localStorage.setItem("savedCustomerName", name);
+            localStorage.setItem("savedCustomerPhone", phone);
+
+            document.getElementById("customerModal").style.display = "none";
+            document.getElementById("displayCustomerName").innerText = name;
+            document.getElementById("displayCustomerPhone").innerText = "📱 " + phone;
+        }
+
+        function editDetails() {
+            localStorage.removeItem("savedCustomerName");
+            localStorage.removeItem("savedCustomerPhone");
+            location.reload();
+        }
 
         function filterCategory(category, btnElement) {
             selectedCategory = category;
@@ -443,16 +484,14 @@
 
         function verifyLocationAndOrder() {
             const customerName = localStorage.getItem("savedCustomerName");
-const customerPhone = localStorage.getItem("savedCustomerPhone");
+            const customerPhone = localStorage.getItem("savedCustomerPhone");
+            const totalAmount = calculateTotal();
 
-if (!customerName) { 
-    alert("कृपया अपना नाम जरूर भरें!"); 
-    return; 
-}
-if (!customerPhone || customerPhone.length < 10) { 
-    alert("कृपया सही 10 अंकों का मोबाइल नंबर दर्ज करें!"); 
-    return; 
-}
+            if (!customerName || !customerPhone) { 
+                alert("कृपया पहले अपनी डिटेल्स दर्ज करें!"); 
+                document.getElementById("customerModal").style.display = "flex";
+                return; 
+            }
             if (totalAmount === 0) { 
                 alert("कृपया कम से कम 1 आइटम चुनें!"); 
                 return; 
@@ -503,7 +542,7 @@ if (!customerPhone || customerPhone.length < 10) {
 
         async function placeOrder() {
             const customerName = localStorage.getItem("savedCustomerName");
-const customerPhone = localStorage.getItem("savedCustomerPhone");
+            const customerPhone = localStorage.getItem("savedCustomerPhone");
             const totalAmount = calculateTotal();
 
             let orderedItems = [];
@@ -514,13 +553,13 @@ const customerPhone = localStorage.getItem("savedCustomerPhone");
             });
 
             const orderData = {
-    customerName: customerName,
-    customerPhone: customerPhone, // Yeh naya field add kiya hai
-    tableNumber: currentTable,
-    items: orderedItems,
-    totalBill: totalAmount,
-    orderTime: new Date().toLocaleString("hi-IN")
-};
+                customerName: customerName,
+                customerPhone: customerPhone,
+                tableNumber: currentTable,
+                items: orderedItems,
+                totalBill: totalAmount,
+                orderTime: new Date().toLocaleString("hi-IN")
+            };
 
             const btn = document.getElementById("placeOrderBtn");
             btn.innerText = "ऑर्डर भेजा जा रहा है...";
@@ -533,19 +572,13 @@ const customerPhone = localStorage.getItem("savedCustomerPhone");
                 });
 
                 if (response.ok) {
-    // Naam aur phone dono save ho jayenge taaki agli baar dobara na likhna pade
-    localStorage.setItem("savedCustomerName", customerName);
-    localStorage.setItem("savedCustomerPhone", customerPhone);
-
-    alert(`🎉 ${customerName} ji, aapka order hame mil gaya hai, kuch hi der mein aapka order aapko serve kiya jayega!`);
-    cart = {};
-    document.getElementById("customerName").value = "";
-    document.getElementById("customerPhone").value = ""; // Phone field clear ho jayegi
-    document.getElementById("searchInput").value = "";
-    searchQuery = "";
-    renderMenu();
-    calculateTotal();
-} else {
+                    alert(`🎉 ${customerName} ji, aapka order hame mil gaya hai, kuch hi der mein aapka order aapko serve kiya jayega!`);
+                    cart = {};
+                    document.getElementById("searchInput").value = "";
+                    searchQuery = "";
+                    renderMenu();
+                    calculateTotal();
+                } else {
                     alert("ऑर्डर भेजने में समस्या आई।");
                 }
             } catch (error) {
@@ -555,55 +588,6 @@ const customerPhone = localStorage.getItem("savedCustomerPhone");
                 btn.innerText = "ऑर्डर करें (Place Order)";
             }
         }
-
-        renderMenu();
-    // Page load hote hi check karein
-window.onload = function() {
-    const savedName = localStorage.getItem("savedCustomerName");
-    const savedPhone = localStorage.getItem("savedCustomerPhone");
-
-    if (savedName && savedPhone) {
-        // Agar pehle se saved hai toh popup hata do aur display par dikhao
-        document.getElementById("customerModal").style.display = "none";
-        document.getElementById("displayCustomerName").innerText = savedName;
-        document.getElementById("displayCustomerPhone").innerText = "📱 " + savedPhone;
-    } else {
-        // Agar pehle se saved nahi hai toh popup dikhao
-        document.getElementById("customerModal").style.display = "flex";
-    }
-    renderMenu();
-};
-
-// Popup se details save karne ka function
-function saveCustomerDetails() {
-    const name = document.getElementById("popupName").value.trim();
-    const phone = document.getElementById("popupPhone").value.trim();
-
-    if (!name) {
-        alert("Kripya apna naam darj karein!");
-        return;
-    }
-    if (!phone || phone.length < 10) {
-        alert("Kripya sahi 10 anko ka mobile number darj karein!");
-        return;
-    }
-
-    // LocalStorage mein save karein
-    localStorage.setItem("savedCustomerName", name);
-    localStorage.setItem("savedCustomerPhone", phone);
-
-    // Popup chupayein aur display update karein
-    document.getElementById("customerModal").style.display = "none";
-    document.getElementById("displayCustomerName").innerText = name;
-    document.getElementById("displayCustomerPhone").innerText = "📱 " + phone;
-}
-
-// Agar customer apna naam/number badalna chahe
-function editDetails() {
-    localStorage.removeItem("savedCustomerName");
-    localStorage.removeItem("savedCustomerPhone");
-    location.reload(); // Page refresh hoga aur popup dobara khul jayega
-}
     </script>
 </body>
 </html>
