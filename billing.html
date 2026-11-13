@@ -137,7 +137,8 @@
                 <div class="order-card ${cardClass}" id="card-${id}">
                     <div>
                         <div class="order-header">
-                            <span class="customer-name">${order.customerName}</span>
+                            <p>Customer Name: <b>${order.customerName}</b></p>
+                            <p>Mobile No: <b>${order.customerPhone || 'N/A'}</b></p>
                             <span class="table-badge">Table: ${order.tableNumber}</span>
                         </div>
                         <div class="order-time">⏰ ${order.orderTime}</div>
