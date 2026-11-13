@@ -256,6 +256,10 @@
                 <label for="customerName">👤 अपना नाम दर्ज करें (Enter Your Name):</label>
                 <input type="text" id="customerName" placeholder="उदा. Rahul Sharma" required>
             </div>
+        <div class="input-group" style="margin-top: 10px;">
+    <label for="customerPhone">📱 मोबाइल नंबर (Phone Number):</label>
+    <input type="tel" id="customerPhone" placeholder="अपना 10 अंकों का मोबाइल नंबर लिखें" maxlength="10" required>
+</div>
             <div class="input-group">
                 <input type="text" id="searchInput" placeholder="🔍 खाना खोजें (Search Paneer, Shake, Ice Cream...)" onkeyup="handleSearch()">
             </div>
@@ -287,8 +291,12 @@
         // Page khulte hi check karein ki kya pehle ka naam saved hai
 window.onload = function() {
     const savedName = localStorage.getItem("savedCustomerName");
+    const savedPhone = localStorage.getItem("savedCustomerPhone");
     if (savedName) {
         document.getElementById("customerName").value = savedName;
+    }
+    if (savedPhone) {
+        document.getElementById("customerPhone").value = savedPhone;
     }
 };
         const FIREBASE_URL = "https://restaurent-fad84-default-rtdb.firebaseio.com/";
@@ -429,12 +437,16 @@ window.onload = function() {
 
         function verifyLocationAndOrder() {
             const customerName = document.getElementById("customerName").value.trim();
-            const totalAmount = calculateTotal();
+const customerPhone = document.getElementById("customerPhone").value.trim();
 
-            if (!customerName) { 
-                alert("कृपया अपना नाम जरूर भरें!"); 
-                return; 
-            }
+if (!customerName) { 
+    alert("कृपया अपना नाम जरूर भरें!"); 
+    return; 
+}
+if (!customerPhone || customerPhone.length < 10) { 
+    alert("कृपया सही 10 अंकों का मोबाइल नंबर दर्ज करें!"); 
+    return; 
+}
             if (totalAmount === 0) { 
                 alert("कृपया कम से कम 1 आइटम चुनें!"); 
                 return; 
@@ -495,12 +507,13 @@ window.onload = function() {
             });
 
             const orderData = {
-                customerName: customerName,
-                tableNumber: currentTable,
-                items: orderedItems,
-                totalBill: totalAmount,
-                orderTime: new Date().toLocaleString("hi-IN")
-            };
+    customerName: customerName,
+    customerPhone: customerPhone, // Yeh naya field add kiya hai
+    tableNumber: currentTable,
+    items: orderedItems,
+    totalBill: totalAmount,
+    orderTime: new Date().toLocaleString("hi-IN")
+};
 
             const btn = document.getElementById("placeOrderBtn");
             btn.innerText = "ऑर्डर भेजा जा रहा है...";
@@ -513,11 +526,14 @@ window.onload = function() {
                 });
 
                 if (response.ok) {
-                    // Order successful hone par naam save kar lein
-localStorage.setItem("savedCustomerName", customerName);
+    // Naam aur phone dono save ho jayenge taaki agli baar dobara na likhna pade
+    localStorage.setItem("savedCustomerName", customerName);
+    localStorage.setItem("savedCustomerPhone", customerPhone);
+
     alert(`🎉 ${customerName} ji, aapka order hame mil gaya hai, kuch hi der mein aapka order aapko serve kiya jayega!`);
     cart = {};
     document.getElementById("customerName").value = "";
+    document.getElementById("customerPhone").value = ""; // Phone field clear ho jayegi
     document.getElementById("searchInput").value = "";
     searchQuery = "";
     renderMenu();
