@@ -7,13 +7,14 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f4f6f9; color: #333; padding: 20px; }
-        header { background-color: #b71c1c; color: white; text-align: center; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        header h1 { font-size: 24px; }
+        header { background-color: #b71c1c; color: white; text-align: center; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 22px; }
+        .logout-btn { background: white; color: #b71c1c; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .logout-btn:hover { background: #ffebee; }
         .orders-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .order-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 5px solid #b71c1c; display: flex; flex-direction: column; justify-content: space-between; }
         .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
         .table-badge { background: #ffebee; color: #b71c1c; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 14px; }
-        .customer-name { font-size: 16px; font-weight: bold; color: #444; }
         .order-time { font-size: 12px; color: #777; margin-bottom: 10px; }
         .item-list { list-style: none; margin-bottom: 15px; }
         .item-list li { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #f0f0f0; font-size: 15px; }
@@ -27,23 +28,25 @@
 </head>
 <body>
     <!-- Staff Secure Login Modal -->
-<div id="staffLoginModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
-    <div style="background: white; padding: 30px; border-radius: 14px; width: 90%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); text-align: center;">
-        <h2 style="color: #1b5e20; margin-bottom: 8px; font-size: 22px;">🔒 Staff Secure Login</h2>
-        <p style="color: #666; font-size: 13px; margin-bottom: 20px;">Kripya apna email aur password darj karein.</p>
-        
-        <div style="margin-bottom: 12px; text-align: left;">
-            <input type="email" id="staffEmail" placeholder="Email (उदा. admin@restaurant.com)" style="width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none;">
-        </div>
-        <div style="margin-bottom: 20px; text-align: left;">
-            <input type="password" id="staffPass" placeholder="Password" style="width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none;">
-        </div>
+    <div id="staffLoginModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+        <div style="background: white; padding: 30px; border-radius: 14px; width: 90%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); text-align: center;">
+            <h2 style="color: #1b5e20; margin-bottom: 8px; font-size: 22px;">🔒 Staff Secure Login</h2>
+            <p style="color: #666; font-size: 13px; margin-bottom: 20px;">Kripya apna email aur password darj karein.</p>
+            
+            <div style="margin-bottom: 12px; text-align: left;">
+                <input type="email" id="staffEmail" placeholder="Email (उदा. admin@restaurant.com)" style="width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none;">
+            </div>
+            <div style="margin-bottom: 20px; text-align: left;">
+                <input type="password" id="staffPass" placeholder="Password" style="width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none;">
+            </div>
 
-        <button onclick="loginStaff()" style="background: #2e7d32; color: white; border: none; width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(46,125,50,0.3);">Login Karein ➔</button>
+            <button onclick="loginStaff()" style="background: #2e7d32; color: white; border: none; width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px (46,125,50,0.3);">Login Karein ➔</button>
+        </div>
     </div>
-</div>
+
     <header>
         <h1>👨‍🍳 Kitchen Live Orders Counter</h1>
+        <button class="logout-btn" onclick="logoutStaff()">Logout 🚪</button>
     </header>
 
     <div class="orders-container" id="ordersContainer">
@@ -52,69 +55,69 @@
 
     <audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
-        <!-- Firebase SDK v8 Scripts -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <!-- Firebase SDK v8 Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
-<script>
-    // Aapki Firebase Configuration (Jo aapne index.html mein use ki hai)
-    const firebaseConfig = {
-        apiKey: "AIzaSyDKd6fa9cakNb-U8G2PeIX9Ku_qA8Gs8ok",
-        authDomain: "restaurent-fad84.firebaseapp.com",
-        projectId: "restaurent-fad84",
-        databaseURL: "https://restaurent-fad84-default-rtdb.firebaseio.com"
-    };
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKd6fa9cakNb-U8G2PeIX9Ku_qA8Gs8ok",
+            authDomain: "restaurent-fad84.firebaseapp.com",
+            projectId: "restaurent-fad84",
+            databaseURL: "https://restaurent-fad84-default-rtdb.firebaseio.com"
+        };
 
-    // Firebase initialize karein
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-
-    // Page khulte hi check karein ki staff logged-in hai ya nahi
-    firebase.auth().onAuthStateChanged((user) => {
-        if (user) {
-            // Logged in hai: Modal chhupa do aur orders load karo
-            document.getElementById("staffLoginModal").style.display = "none";
-            
-            // (Agar aapke code mein orders fetch karne ka function hai, jaise loadOrders(), toh use yahan call kar sakte hain)
-            if (typeof loadOrders === "function") {
-                loadOrders();
-            }
-        } else {
-            // Logged out hai: Login modal dikhao
-            document.getElementById("staffLoginModal").style.display = "flex";
-        }
-    });
-
-    // Login function
-    function loginStaff() {
-        const email = document.getElementById("staffEmail").value.trim();
-        const pass = document.getElementById("staffPass").value.trim();
-
-        if (!email || !pass) {
-            alert("Kripya Email aur Password dono bharein!");
-            return;
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
 
-        firebase.auth().signInWithEmailAndPassword(email, pass)
-            .then((userCredential) => {
-                // Success! Modal apne aap hat jayega onAuthStateChanged ki wajah se
-            })
+        // 1. Session Persistence set kiya taaki tab close hone par auto logout ho jaye
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
             .catch((error) => {
-                alert("❌ Login Failed: " + error.message);
+                console.error("Persistence error:", error);
             });
-    }
 
-    // Logout function (Agar aap page par kahin Logout button lagana chahein)
-    function logoutStaff() {
-        firebase.auth().signOut().then(() => {
-            location.reload();
+        // Page khulte hi check karein ki staff logged-in hai ya nahi
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                document.getElementById("staffLoginModal").style.display = "none";
+                fetchOrders();
+            } else {
+                document.getElementById("staffLoginModal").style.display = "flex";
+            }
         });
-    }
+
+        function loginStaff() {
+            const email = document.getElementById("staffEmail").value.trim();
+            const pass = document.getElementById("staffPass").value.trim();
+
+            if (!email || !pass) {
+                alert("Kripya Email aur Password dono bharein!");
+                return;
+            }
+
+            firebase.auth().signInWithEmailAndPassword(email, pass)
+                .then((userCredential) => {
+                    // Login successful
+                })
+                .catch((error) => {
+                    alert("❌ Login Failed: " + error.message);
+                });
+        }
+
+        function logoutStaff() {
+            firebase.auth().signOut().then(() => {
+                location.reload();
+            });
+        }
+
         const FIREBASE_URL = "https://restaurent-fad84-default-rtdb.firebaseio.com/";
         let previousOrderCount = 0;
 
         async function fetchOrders() {
+            // Agar user logged in nahi hai toh data fetch mat karo
+            if (!firebase.auth().currentUser) return;
+
             try {
                 const response = await fetch(FIREBASE_URL + "orders.json");
                 const data = await response.json();
@@ -129,26 +132,30 @@
                 }
 
                 const orderIds = Object.keys(data);
-                if (orderIds.length > previousOrderCount && previousOrderCount !== 0) {
-                    playAlertSound();
-                }
-                previousOrderCount = orderIds.length;
+                let validOrdersCount = 0;
 
                 orderIds.forEach(orderId => {
                     const order = data[orderId];
-                    let itemsHTML = "";
-                    if (order.items) {
-                        order.items.forEach(item => {
-                            itemsHTML += `<li><span>${item.name}</span><span class="item-qty">x ${item.quantity}</span></li>`;
-                        });
+                    
+                    // 2. CHECK: Agar order valid nahi hai (jaise undefined ya khali data), toh use skip kar do
+                    if (!order || !order.customerName || !order.items) {
+                        return;
                     }
+
+                    validOrdersCount++;
+                    let itemsHTML = "";
+                    order.items.forEach(item => {
+                        itemsHTML += `<li><span>${item.name}</span><span class="item-qty">x ${item.quantity}</span></li>`;
+                    });
 
                     container.innerHTML += `
                         <div class="order-card" id="card-${orderId}">
                             <div>
                                 <div class="order-header">
-                                    <p><strong>Customer:</strong> ${order.customerName}<br></p>
-                                    <p><strong>Phone:</strong> 📱 ${order.customerPhone || 'N/A'}</p>
+                                    <div>
+                                        <p><strong>Customer:</strong> ${order.customerName}</p>
+                                        <p style="font-size: 13px; color: #555;"><strong>Phone:</strong> 📱 ${order.customerPhone || 'N/A'}</p>
+                                    </div>
                                     <span class="table-badge">Table: ${order.tableNumber}</span>
                                 </div>
                                 <div class="order-time">⏰ ${order.orderTime}</div>
@@ -161,6 +168,17 @@
                         </div>
                     `;
                 });
+
+                if (validOrdersCount === 0) {
+                    container.innerHTML = `<div class="no-orders">फिलहाल कोई नया ऑर्डर नहीं है।</div>`;
+                    previousOrderCount = 0;
+                } else {
+                    if (validOrdersCount > previousOrderCount && previousOrderCount !== 0) {
+                        playAlertSound();
+                    }
+                    previousOrderCount = validOrdersCount;
+                }
+
             } catch (error) {
                 console.error("एरर:", error);
             }
@@ -169,7 +187,6 @@
         async function completeOrder(orderId) {
             if (confirm("क्या यह ऑर्डर पूरा हो गया है? इसे Billing Counter पर भेजें?")) {
                 try {
-                    // 1. Pehle us order ka data fetch karein jo orders mein pada hai
                     const getRes = await fetch(FIREBASE_URL + `orders/${orderId}.json`);
                     const orderData = await getRes.json();
 
@@ -178,20 +195,19 @@
                         return;
                     }
 
-                    // 2. Us data ko billing node mein save karein
                     await fetch(FIREBASE_URL + "billing.json", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(orderData)
                     });
 
-                    // 3. Phir active orders (orders/) se delete karein
                     const deleteRes = await fetch(FIREBASE_URL + `orders/${orderId}.json`, {
                         method: "DELETE"
                     });
 
                     if (deleteRes.ok) {
-                        document.getElementById(`card-${orderId}`).remove();
+                        const card = document.getElementById(`card-${orderId}`);
+                        if(card) card.remove();
                         fetchOrders();
                         alert("ऑर्डर सफलतापूर्वक Billing Counter पर भेज दिया गया है!");
                     }
@@ -205,8 +221,9 @@
             document.getElementById("notificationSound").play().catch(e => console.log(e));
         }
 
-        fetchOrders();
-        setInterval(fetchOrders, 5000);
+        setInterval(() => {
+            fetchOrders();
+        }, 5000);
     </script>
 </body>
 </html>
