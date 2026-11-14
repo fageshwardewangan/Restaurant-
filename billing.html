@@ -70,31 +70,36 @@
     </div>
 
     <script>
-        // Page khulte hi check karein ki staff logged in hai ya nahi
-window.addEventListener('DOMContentLoaded', (event) => {
-    const isStaffLogged = sessionStorage.getItem("staffLoggedIn");
-    if (isStaffLogged === "true") {
-        document.getElementById("staffLoginModal").style.display = "none";
-    } else {
-        document.getElementById("staffLoginModal").style.display = "flex";
-    }
-});
+    // 1. Page khulte hi check karein ki kya staff ne is session mein login kiya hai
+    window.addEventListener('DOMContentLoaded', (event) => {
+        const isStaffLogged = sessionStorage.getItem("staffLoggedIn");
+        if (isStaffLogged === "true") {
+            document.getElementById("staffLoginModal").style.display = "none";
+        } else {
+            document.getElementById("staffLoginModal").style.display = "flex";
+        }
+    });
 
-// Password verify karne ka function
-function verifyStaffPassword() {
-    const enteredPass = document.getElementById("staffPassInput").value.trim();
-    
-    // Yahan aap apna manchaha password set kar sakte hain (abhi ke liye 'admin123' rakha hai)
-    const correctPassword = "admin123"; 
+    // 2. Jaise hi user tab ya browser band karega ya page close karega, login status khatam ho jayega
+    window.addEventListener('beforeunload', function () {
+        sessionStorage.removeItem("staffLoggedIn");
+    });
 
-    if (enteredPass === correctPassword) {
-        sessionStorage.setItem("staffLoggedIn", "true");
-        document.getElementById("staffLoginModal").style.display = "none";
-    } else {
-        alert("❌ Galat Password! Kripya sahi password dalein.");
-        document.getElementById("staffPassInput").value = "";
+    // 3. Password verify karne ka function
+    function verifyStaffPassword() {
+        const enteredPass = document.getElementById("staffPassInput").value.trim();
+        
+        // Yahan aap apna password badal sakte hain
+        const correctPassword = "admin123"; 
+
+        if (enteredPass === correctPassword) {
+            sessionStorage.setItem("staffLoggedIn", "true");
+            document.getElementById("staffLoginModal").style.display = "none";
+        } else {
+            alert("❌ Galat Password! Kripya sahi password dalein.");
+            document.getElementById("staffPassInput").value = "";
+        }
     }
-}
         const FIREBASE_URL = "https://restaurent-fad84-default-rtdb.firebaseio.com/";
 
         async function fetchBillingData() {
