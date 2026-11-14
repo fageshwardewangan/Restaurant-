@@ -7,8 +7,10 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f4f6f9; color: #333; padding: 20px; }
-        header { background-color: #007bff; color: white; text-align: center; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        header h1 { font-size: 24px; }
+        header { background-color: #007bff; color: white; text-align: center; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 22px; }
+        .logout-btn { background: white; color: #007bff; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .logout-btn:hover { background: #e7f1ff; }
         .section-title { margin: 25px 0 15px 0; font-size: 20px; color: #333; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
         .orders-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
         .order-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 5px solid #007bff; display: flex; flex-direction: column; justify-content: space-between; }
@@ -16,7 +18,6 @@
         .history-card { border-top: 5px solid #28a745; background: #fafafa; }
         .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
         .table-badge { background: #e7f1ff; color: #007bff; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 14px; }
-        .customer-name { font-size: 16px; font-weight: bold; color: #444; }
         .order-time { font-size: 12px; color: #777; margin-bottom: 10px; }
         .item-list { list-style: none; margin-bottom: 15px; max-height: 150px; overflow-y: auto; }
         .item-list li { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #f0f0f0; font-size: 14px; }
@@ -33,23 +34,25 @@
 </head>
 <body>
     <!-- Staff Secure Login Modal -->
-<div id="staffLoginModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
-    <div style="background: white; padding: 30px; border-radius: 14px; width: 90%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); text-align: center;">
-        <h2 style="color: #1b5e20; margin-bottom: 8px; font-size: 22px;">🔒 Staff Secure Login</h2>
-        <p style="color: #666; font-size: 13px; margin-bottom: 20px;">Kripya apna email aur password darj karein.</p>
-        
-        <div style="margin-bottom: 12px; text-align: left;">
-            <input type="email" id="staffEmail" placeholder="Email (उदा. admin@restaurant.com)" style="width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none;">
-        </div>
-        <div style="margin-bottom: 20px; text-align: left;">
-            <input type="password" id="staffPass" placeholder="Password" style="width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none;">
-        </div>
+    <div id="staffLoginModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(5px);">
+        <div style="background: white; padding: 30px; border-radius: 14px; width: 90%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); text-align: center;">
+            <h2 style="color: #1b5e20; margin-bottom: 8px; font-size: 22px;">🔒 Staff Secure Login</h2>
+            <p style="color: #666; font-size: 13px; margin-bottom: 20px;">Kripya apna email aur password darj karein.</p>
+            
+            <div style="margin-bottom: 12px; text-align: left;">
+                <input type="email" id="staffEmail" placeholder="Email (उदा. admin@restaurant.com)" style="width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none;">
+            </div>
+            <div style="margin-bottom: 20px; text-align: left;">
+                <input type="password" id="staffPass" placeholder="Password" style="width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none;">
+            </div>
 
-        <button onclick="loginStaff()" style="background: #2e7d32; color: white; border: none; width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(46,125,50,0.3);">Login Karein ➔</button>
+            <button onclick="loginStaff()" style="background: #2e7d32; color: white; border: none; width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(46,125,50,0.3);">Login Karein ➔</button>
+        </div>
     </div>
-</div>
+
     <header>
         <h1>🧾 Billing & Payment Counter</h1>
+        <button class="logout-btn" onclick="logoutStaff()">Logout 🚪</button>
     </header>
 
     <div class="container">
@@ -74,68 +77,67 @@
 
     <audio id="notificationSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
-        <!-- Firebase SDK v8 Scripts -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <!-- Firebase SDK v8 Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
-<script>
-    // Aapki Firebase Configuration (Jo aapne index.html mein use ki hai)
-    const firebaseConfig = {
-        apiKey: "AIzaSyDKd6fa9cakNb-U8G2PeIX9Ku_qA8Gs8ok",
-        authDomain: "restaurent-fad84.firebaseapp.com",
-        projectId: "restaurent-fad84",
-        databaseURL: "https://restaurent-fad84-default-rtdb.firebaseio.com"
-    };
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKd6fa9cakNb-U8G2PeIX9Ku_qA8Gs8ok",
+            authDomain: "restaurent-fad84.firebaseapp.com",
+            projectId: "restaurent-fad84",
+            databaseURL: "https://restaurent-fad84-default-rtdb.firebaseio.com"
+        };
 
-    // Firebase initialize karein
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-
-    // Page khulte hi check karein ki staff logged-in hai ya nahi
-    firebase.auth().onAuthStateChanged((user) => {
-        if (user) {
-            // Logged in hai: Modal chhupa do aur orders load karo
-            document.getElementById("staffLoginModal").style.display = "none";
-            
-            // (Agar aapke code mein orders fetch karne ka function hai, jaise loadOrders(), toh use yahan call kar sakte hain)
-            if (typeof loadOrders === "function") {
-                loadOrders();
-            }
-        } else {
-            // Logged out hai: Login modal dikhao
-            document.getElementById("staffLoginModal").style.display = "flex";
-        }
-    });
-
-    // Login function
-    function loginStaff() {
-        const email = document.getElementById("staffEmail").value.trim();
-        const pass = document.getElementById("staffPass").value.trim();
-
-        if (!email || !pass) {
-            alert("Kripya Email aur Password dono bharein!");
-            return;
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
 
-        firebase.auth().signInWithEmailAndPassword(email, pass)
-            .then((userCredential) => {
-                // Success! Modal apne aap hat jayega onAuthStateChanged ki wajah se
-            })
+        // Session persistence set kiya taaki tab close hone par auto logout ho jaye
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
             .catch((error) => {
-                alert("❌ Login Failed: " + error.message);
+                console.error("Persistence error:", error);
             });
-    }
 
-    // Logout function (Agar aap page par kahin Logout button lagana chahein)
-    function logoutStaff() {
-        firebase.auth().signOut().then(() => {
-            location.reload();
+        // Page khulte hi check karein ki staff logged-in hai ya nahi
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                document.getElementById("staffLoginModal").style.display = "none";
+                fetchBillingData();
+            } else {
+                document.getElementById("staffLoginModal").style.display = "flex";
+            }
         });
-    }
+
+        function loginStaff() {
+            const email = document.getElementById("staffEmail").value.trim();
+            const pass = document.getElementById("staffPass").value.trim();
+
+            if (!email || !pass) {
+                alert("Kripya Email aur Password dono bharein!");
+                return;
+            }
+
+            firebase.auth().signInWithEmailAndPassword(email, pass)
+                .then((userCredential) => {
+                    // Login successful
+                })
+                .catch((error) => {
+                    alert("❌ Login Failed: " + error.message);
+                });
+        }
+
+        function logoutStaff() {
+            firebase.auth().signOut().then(() => {
+                location.reload();
+            });
+        }
+
         const FIREBASE_URL = "https://restaurent-fad84-default-rtdb.firebaseio.com/";
 
         async function fetchBillingData() {
+            if (!firebase.auth().currentUser) return;
+
             try {
                 const liveRes = await fetch(FIREBASE_URL + "orders.json");
                 const liveData = await liveRes.json();
@@ -161,9 +163,15 @@
                 container.innerHTML = `<div class="no-orders">कोई नया लाइव ऑर्डर नहीं है।</div>`;
                 return;
             }
+            let count = 0;
             Object.keys(data).forEach(id => {
-                container.innerHTML += createCard(id, data[id], "live", false);
+                const order = data[id];
+                if (order && order.customerName && order.items) {
+                    container.innerHTML += createCard(id, order, "live", false);
+                    count++;
+                }
             });
+            if (count === 0) container.innerHTML = `<div class="no-orders">कोई नया लाइव ऑर्डर नहीं है।</div>`;
         }
 
         function renderBilling(data) {
@@ -173,9 +181,15 @@
                 container.innerHTML = `<div class="no-orders">कोई पेंडिंग बिल नहीं है।</div>`;
                 return;
             }
+            let count = 0;
             Object.keys(data).forEach(id => {
-                container.innerHTML += createCard(id, data[id], "billing", true);
+                const order = data[id];
+                if (order && order.customerName && order.items) {
+                    container.innerHTML += createCard(id, order, "billing", true);
+                    count++;
+                }
             });
+            if (count === 0) container.innerHTML = `<div class="no-orders">कोई पेंडिंग बिल नहीं है।</div>`;
         }
 
         function renderHistory(data) {
@@ -185,9 +199,15 @@
                 container.innerHTML = `<div class="no-orders">कोई पुरानी हिस्ट्री नहीं है।</div>`;
                 return;
             }
+            let count = 0;
             Object.keys(data).reverse().forEach(id => {
-                container.innerHTML += createCard(id, data[id], "history", false);
+                const order = data[id];
+                if (order && order.customerName && order.items) {
+                    container.innerHTML += createCard(id, order, "history", false);
+                    count++;
+                }
             });
+            if (count === 0) container.innerHTML = `<div class="no-orders">कोई पुरानी हिस्ट्री नहीं है।</div>`;
         }
 
         function renderItems(items) {
@@ -202,7 +222,6 @@
 
         function createCard(id, order, type, showPayBtn) {
             let cardClass = type === 'billing' ? 'billing-card' : (type === 'history' ? 'history-card' : '');
-            // Safe JSON stringification for print button
             const itemsStr = encodeURIComponent(JSON.stringify(order.items || []));
             
             let actionBtn = showPayBtn ? `<button class="btn pay-btn" onclick="paymentDone('${id}')">Payment Done</button>` : '';
@@ -212,8 +231,10 @@
                 <div class="order-card ${cardClass}" id="card-${id}">
                     <div>
                         <div class="order-header">
-                            <p>Customer: <b>${order.customerName}</b></p>
-                            <p>Mobile No: <b>${order.customerPhone || 'N/A'}</b></p>
+                            <div>
+                                <p>Customer: <b>${order.customerName}</b></p>
+                                <p style="font-size: 13px; color: #555;">Mobile No: <b>${order.customerPhone || 'N/A'}</b></p>
+                            </div>
                             <span class="table-badge">Table: ${order.tableNumber}</span>
                         </div>
                         <div class="order-time">⏰ ${order.orderTime}</div>
@@ -227,11 +248,9 @@
             `;
         }
 
-        // Payment Done button logic using ID fetch
         async function paymentDone(orderId) {
             if (confirm("क्या इस ऑर्डर का पेमेंट पूरा हो गया है?")) {
                 try {
-                    // 1. Pehle billing node se data fetch karein
                     const getRes = await fetch(FIREBASE_URL + `billing/${orderId}.json`);
                     const orderData = await getRes.json();
 
@@ -240,14 +259,12 @@
                         return;
                     }
 
-                    // 2. History node mein save karein
                     await fetch(FIREBASE_URL + "history.json", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(orderData)
                     });
 
-                    // 3. Billing node se delete karein
                     const deleteRes = await fetch(FIREBASE_URL + `billing/${orderId}.json`, {
                         method: "DELETE"
                     });
@@ -281,8 +298,9 @@
             win.document.close();
         }
 
-        fetchBillingData();
-        setInterval(fetchBillingData, 5000);
+        setInterval(() => {
+            fetchBillingData();
+        }, 5000);
     </script>
 </body>
 </html>
