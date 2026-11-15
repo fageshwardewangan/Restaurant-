@@ -42,6 +42,20 @@
 
         .container { max-width: 900px; margin: 18px auto; padding: 0 15px; }
 
+        /* Active Orders Floating / Top Banner */
+        .active-orders-banner {
+            background: linear-gradient(135deg, #fff3cd, #ffeeba);
+            border: 2px solid #ffecb5;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            color: #856404;
+        }
+        .active-orders-banner h3 { font-size: 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .active-orders-list { font-size: 13px; max-height: 120px; overflow-y: auto; margin-bottom: 10px; list-style: none; }
+        .active-orders-list li { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed #d4edda; }
+
         .top-controls {
             background: rgba(255, 255, 255, 0.95);
             padding: 16px;
@@ -368,6 +382,13 @@
     </header>
     
     <div class="container">
+        <!-- Active Orders Banner (Agar customer ke pending orders honge toh yahan dikhenge) -->
+        <div id="activeOrdersBanner" class="active-orders-banner" style="display: none;">
+            <h3>📋 Aapke Active / Pending Orders <span id="activeTotalBadge" style="font-size: 14px; background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 6px;"></span></h3>
+            <ul class="active-orders-list" id="activeOrdersList"></ul>
+            <p style="font-size: 11px; color: #666; text-align: right; margin: 0;">* Yeh orders tab tak dikhenge jab tak counter se payment clear nahi ho jati.</p>
+        </div>
+
         <div class="customer-info" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 12px; margin-bottom: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
             <div>
                 <p style="font-size: 13px; color: #777;">Welcome,</p>
@@ -469,6 +490,9 @@
                 document.getElementById("customerModal").style.display = "none";
                 document.getElementById("displayCustomerName").innerText = savedName;
                 document.getElementById("displayCustomerPhone").innerText = "📱 " + savedPhone;
+                
+                // Customer details milne par active orders check karo
+                checkCustomerActiveOrders(savedPhone, savedName);
             } else {
                 document.getElementById("customerModal").style.display = "flex";
             }
@@ -488,6 +512,51 @@
             document.getElementById("customerModal").style.display = "none";
             document.getElementById("displayCustomerName").innerText = name;
             document.getElementById("displayCustomerPhone").innerText = "📱 " + phone;
+
+            // Details save hone ke baad active orders check karo
+            checkCustomerActiveOrders(phone, name);
+        }
+
+        // Firebase se check karein ki is customer ke billing section mein koi pending order hai ya nahi
+        async function checkCustomerActiveOrders(phone, name) {
+            try {
+                const response = await fetch(FIREBASE_URL + "billing.json");
+                const data = await response.json();
+
+                if (data) {
+                    let activeItems = [];
+                    let grandTotal = 0;
+                    let hasOrders = false;
+
+                    Object.keys(data).forEach(id => {
+                        const order = data[id];
+                        // Mobile number ya naam match hona chahiye aur table same honi chahiye
+                        if (order && order.customerPhone === phone) {
+                            hasOrders = true;
+                            grandTotal += Number(order.totalBill || 0);
+                            if (order.items) {
+                                order.items.forEach(item => {
+                                    activeItems.push(`<li><span>${item.name} (x${item.quantity})</span> <b>₹${item.subtotal}</b></li>`);
+                                });
+                            }
+                        }
+                    });
+
+                    const banner = document.getElementById("activeOrdersBanner");
+                    const listEl = document.getElementById("activeOrdersList");
+                    const badgeEl = document.getElementById("activeTotalBadge");
+
+                    if (hasOrders) {
+                        listEl.innerHTML = activeItems.join('');
+                        badgeEl.innerText = `Total: ₹${grandTotal}`;
+                        banner.style.display = "block";
+                    } else {
+                        banner.style.display = "none";
+                    }
+                }
+            } catch (error) {
+                console.error("Active orders fetch error:", error);
+            }
         }
 
         function editDetails() {
@@ -660,12 +729,14 @@
                 });
 
                 if (response.ok) {
-                    // Order success hone par cart clear karein aur Game Popup khol dein
                     cart = {};
                     document.getElementById("searchInput").value = "";
                     searchQuery = "";
                     renderMenu();
                     calculateTotal();
+
+                    // Turant active orders banner ko update karein
+                    checkCustomerActiveOrders(customerPhone, customerName);
 
                     // 🎮 Open Game Popup Automatically
                     document.getElementById("gameModal").style.display = "flex";
@@ -721,6 +792,7 @@
             }
 
             if (winningCombo) {
+                winning_combo_idx = winningCombo;
                 winningCombo.forEach(idx => {
                     document.getElementById(`cell-${idx}`).classList.add('cell-winning');
                 });
