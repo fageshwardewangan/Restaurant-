@@ -136,21 +136,25 @@
         const FIREBASE_URL = "https://restaurent-fad84-default-rtdb.firebaseio.com/";
 
         async function fetchBillingData() {
-            if (!firebase.auth().currentUser) return;
+            const user = firebase.auth().currentUser;
+            if (!user) return; // Agar logged in nahi hai toh ruk jao
 
             try {
-                const liveRes = await fetch(FIREBASE_URL + "orders.json");
+                // Token nikalein taaki database rule allow kare
+                const token = await user.getIdToken();
+
+                const liveRes = await fetch(`${FIREBASE_URL}orders.json?auth=${token}`);
                 const liveData = await liveRes.json();
 
-                const billingRes = await fetch(FIREBASE_URL + "billing.json");
+                const billingRes = await fetch(`${FIREBASE_URL}billing.json?auth=${token}`);
                 const billingData = await billingRes.json();
 
-                const historyRes = await fetch(FIREBASE_URL + "history.json");
+                const historyRes = await fetch(`${FIREBASE_URL}history.json?auth=${token}`);
                 const historyData = await historyRes.json();
 
-                renderLive(liveData);
-                renderBilling(billingData);
-                renderHistory(historyData);
+                renderLive(liveData && !liveData.error ? liveData : null);
+                renderBilling(billingData && !billingData.error ? billingData : null);
+                renderHistory(historyData && !historyData.error ? historyData : null);
             } catch (error) {
                 console.error("डेटा फेच करने में एरर:", error);
             }
@@ -249,9 +253,14 @@
         }
 
         async function paymentDone(orderId) {
+            const user = firebase.auth().currentUser;
+            if (!user) return;
+
             if (confirm("क्या इस ऑर्डर का पेमेंट पूरा हो गया है?")) {
                 try {
-                    const getRes = await fetch(FIREBASE_URL + `billing/${orderId}.json`);
+                    const token = await user.getIdToken();
+
+                    const getRes = await fetch(`${FIREBASE_URL}billing/${orderId}.json?auth=${token}`);
                     const orderData = await getRes.json();
 
                     if (!orderData) {
@@ -259,13 +268,13 @@
                         return;
                     }
 
-                    await fetch(FIREBASE_URL + "history.json", {
+                    await fetch(`${FIREBASE_URL}history.json?auth=${token}`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(orderData)
                     });
 
-                    const deleteRes = await fetch(FIREBASE_URL + `billing/${orderId}.json`, {
+                    const deleteRes = await fetch(`${FIREBASE_URL}billing/${orderId}.json?auth=${token}`, {
                         method: "DELETE"
                     });
 
