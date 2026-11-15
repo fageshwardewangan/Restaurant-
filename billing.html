@@ -42,8 +42,8 @@
         .print-btn { background: #17a2b8; color: white; margin-left: 5px; }
         .print-btn:hover { background: #138496; }
         .back-btn { background: #6c757d; color: white; margin-bottom: 15px; }
-        .qr-toggle-btn { background: #ff9800; color: white; margin-bottom: 10px; width: 100%; }
-        .qr-toggle-btn:hover { background: #f57c00; }
+        .merge-btn { background: #673ab7; color: white; margin-bottom: 12px; width: 100%; font-size: 14px; padding: 10px; }
+        .merge-btn:hover { background: #5e35b1; }
 
         /* Search Bar */
         .search-box { width: 100%; padding: 12px 15px; font-size: 15px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 20px; outline: none; }
@@ -165,8 +165,8 @@
         const RESTAURANT_UPI_ID = "dewanganfageshwar@oksbi"; // <--- Apni UPI ID yahan daalein
         const RESTAURANT_NAME = "Shuddh Shakahari Rasoi";
 
-        let globalBillingData = {}; // Saare pending bills ko store rakhne ke liye
-        let globalHistoryData = {}; // History data search ke liye
+        let globalBillingData = {}; 
+        let globalHistoryData = {}; 
 
         // Tab Switching Logic
         function switchTab(tabName) {
@@ -179,7 +179,7 @@
             } else if (tabName === 'billing') {
                 document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
                 document.getElementById('billingTab').classList.add('active');
-                backToBillingList(); // Hamesha list view dikhaye
+                backToBillingList(); 
             } else if (tabName === 'history') {
                 document.querySelector('.nav-btn:nth-child(3)').classList.add('active');
                 document.getElementById('historyTab').classList.add('active');
@@ -255,7 +255,7 @@
             `;
         }
 
-        // Pending Billing List View
+        // Pending Billing List View (Grouped & Merge Option Added)
         function renderBillingList(data) {
             const container = document.getElementById("billingOrdersContainer");
             container.innerHTML = "";
@@ -266,30 +266,148 @@
                 return;
             }
 
+            // Customer Name + Table ke hisaab se orders ko group karein
+            let groups = {};
             keys.forEach(id => {
                 const order = data[id];
                 if (order && order.customerName && order.items) {
+                    const key = `${order.customerName.trim().toLowerCase()}_${order.tableNumber.trim().toLowerCase()}`;
+                    if (!groups[key]) {
+                        groups[key] = { customerName: order.customerName, tableNumber: order.tableNumber, phone: order.customerPhone, orderIds: [], total: 0 };
+                    }
+                    groups[key].orderIds.push(id);
+                    groups[key].total += Number(order.totalBill || 0);
+                }
+            });
+
+            Object.keys(groups).forEach(key => {
+                const grp = groups[key];
+                let mergeButtonHTML = '';
+
+                // Agar ek hi customer ke 1 se zyada pending orders hain, toh Merge button dikhao
+                if (grp.orderIds.length > 1) {
+                    const idsStr = JSON.stringify(grp.orderIds);
+                    mergeButtonHTML = `<button class="btn merge-btn" onclick='mergeCustomerOrders(${idsStr})'>🔗 Merge ${grp.orderIds.length} Orders (₹${grp.total})</button>`;
+                }
+
+                // Agar ek hi order hai, toh direct single bill open hoga
+                grp.orderIds.forEach(id => {
+                    const order = data[id];
+                    if (grp.orderIds.length === 1) {
+                        container.innerHTML += `
+                            <div class="order-card billing-card" onclick="openSingleBill('${id}')">
+                                <div>
+                                    <div class="order-header">
+                                        <div>
+                                            <p>Customer: <b>${order.customerName}</b></p>
+                                            <p style="font-size: 13px; color: #555;">Mobile: <b>${order.customerPhone || 'N/A'}</b></p>
+                                        </div>
+                                        <span class="table-badge">Table: ${order.tableNumber}</span>
+                                    </div>
+                                    <div class="order-time">⏰ ${order.orderTime}</div>
+                                    <p style="color: #007bff; font-weight: bold; font-size: 14px; margin-top: 10px;">👉 Bill Dekhne ke liye click karein</p>
+                                </div>
+                                <div class="order-footer" style="margin-top: 15px;">
+                                    <span class="total-price">कुल: ₹${order.totalBill}</span>
+                                    <span style="font-size: 13px; background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; font-weight: bold;">Pending</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+
+                // Agar multiple orders hain toh unka group card dikhao with Merge button
+                if (grp.orderIds.length > 1) {
                     container.innerHTML += `
-                        <div class="order-card billing-card" onclick="openSingleBill('${id}')">
+                        <div class="order-card" style="border-top: 5px solid #673ab7;">
                             <div>
                                 <div class="order-header">
                                     <div>
-                                        <p>Customer: <b>${order.customerName}</b></p>
-                                        <p style="font-size: 13px; color: #555;">Mobile: <b>${order.customerPhone || 'N/A'}</b></p>
+                                        <p>Customer: <b>${grp.customerName}</b></p>
+                                        <p style="font-size: 13px; color: #555;">Mobile: <b>${grp.phone || 'N/A'}</b></p>
                                     </div>
-                                    <span class="table-badge">Table: ${order.tableNumber}</span>
+                                    <span class="table-badge">Table: ${grp.tableNumber}</span>
                                 </div>
-                                <div class="order-time">⏰ ${order.orderTime}</div>
-                                <p style="color: #007bff; font-weight: bold; font-size: 14px; margin-top: 10px;">👉 Bill Dekhne ke liye click karein</p>
+                                <p style="font-size: 13px; color: #d32f2f; font-weight: bold; margin-bottom: 10px;">⚠️ Is customer ke ${grp.orderIds.length} alag-alag pending orders hain!</p>
+                                ${mergeButtonHTML}
                             </div>
-                            <div class="order-footer" style="margin-top: 15px;">
-                                <span class="total-price">कुल: ₹${order.totalBill}</span>
-                                <span style="font-size: 13px; background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; font-weight: bold;">Pending</span>
+                            <div class="order-footer">
+                                <span class="total-price">Combined Total: ₹${grp.total}</span>
+                                <span style="font-size: 13px; background: #ede7f6; color: #512da8; padding: 4px 8px; border-radius: 4px; font-weight: bold;">Multiple Orders</span>
                             </div>
                         </div>
                     `;
                 }
             });
+        }
+
+        // Multiple Orders ko ek sath merge karne ka function
+        async function mergeCustomerOrders(orderIds) {
+            const user = firebase.auth().currentUser;
+            if (!user) return;
+
+            if (!confirm(`Kya aap is customer ke sabhi ${orderIds.length} orders ko ek sath merge karke final bill banana chahte hain?`)) {
+                return;
+            }
+
+            try {
+                const token = await user.getIdToken();
+                let mergedItems = [];
+                let grandTotal = 0;
+                let firstOrder = null;
+
+                // 1. Sabhi orders ka data ikattha karo
+                for (let id of orderIds) {
+                    const order = globalBillingData[id];
+                    if (order) {
+                        if (!firstOrder) firstOrder = order;
+                        grandTotal += Number(order.totalBill || 0);
+                        if (order.items) {
+                            order.items.forEach(item => {
+                                // Agar same item pehle se hai toh quantity aur subtotal jod do
+                                let existing = mergedItems.find(i => i.name === item.name);
+                                if (existing) {
+                                    existing.quantity += Number(item.quantity);
+                                    existing.subtotal += Number(item.subtotal);
+                                } else {
+                                    mergedItems.push({ ...item });
+                                }
+                            });
+                        }
+                    }
+                }
+
+                // 2. Naya Merged Order object banao
+                const mergedOrderId = "merged_" + Date.now();
+                const mergedOrderData = {
+                    customerName: firstOrder.customerName,
+                    customerPhone: firstOrder.customerPhone || 'N/A',
+                    tableNumber: firstOrder.tableNumber,
+                    items: mergedItems,
+                    totalBill: grandTotal,
+                    orderTime: firstOrder.orderTime + " (Merged)"
+                };
+
+                // 3. Firebase mein naya merged order save karo
+                await fetch(`${FIREBASE_URL}billing/${mergedOrderId}.json?auth=${token}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(mergedOrderData)
+                });
+
+                // 4. Purane alag-alag orders ko delete kar do
+                for (let id of orderIds) {
+                    await fetch(`${FIREBASE_URL}billing/${id}.json?auth=${token}`, {
+                        method: "DELETE"
+                    });
+                }
+
+                alert("🎉 Orders successfully merge ho gaye hain! Ab aap single bill dekhakar payment le sakte hain.");
+                fetchBillingData();
+
+            } catch (error) {
+                alert("Error merging orders: " + error.message);
+            }
         }
 
         // Sirf ek chuna hua bill dikhane ke liye
@@ -344,6 +462,7 @@
         function backToBillingList() {
             document.getElementById("billingDetailView").style.display = "none";
             document.getElementById("billingMainView").style.display = "block";
+            fetchBillingData();
         }
 
         function renderHistory(data) {
