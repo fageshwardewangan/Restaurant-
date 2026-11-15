@@ -515,41 +515,45 @@
             checkCustomerActiveOrders(phone);
         }
 
-        // Firebase billing database se active orders check karne ka function
+        // --- Firebase Active Orders Fetching Function ---
         async function checkCustomerActiveOrders(phone) {
+            if (!phone) return;
             try {
                 const response = await fetch(FIREBASE_URL + "billing.json");
                 const data = await response.json();
 
-                if (data) {
-                    let activeItems = [];
-                    let grandTotal = 0;
-                    let hasOrders = false;
+                const banner = document.getElementById("activeOrdersBanner");
+                const listEl = document.getElementById("activeOrdersList");
+                const badgeEl = document.getElementById("activeTotalBadge");
 
-                    Object.keys(data).forEach(id => {
-                        const order = data[id];
-                        if (order && order.customerPhone && order.customerPhone.trim() === phone.trim()) {
-                            hasOrders = true;
-                            grandTotal += Number(order.totalBill || 0);
-                            if (order.items) {
-                                order.items.forEach(item => {
-                                    activeItems.push(`<li><span>${item.name} (x${item.quantity})</span> <b>₹${item.subtotal}</b></li>`);
-                                });
-                            }
+                if (!data) {
+                    banner.style.display = "none";
+                    return;
+                }
+
+                let activeItems = [];
+                let grandTotal = 0;
+                let hasOrders = false;
+
+                Object.keys(data).forEach(id => {
+                    const order = data[id];
+                    if (order && order.customerPhone && order.customerPhone.toString().trim() === phone.toString().trim()) {
+                        hasOrders = true;
+                        grandTotal += Number(order.totalBill || 0);
+                        if (order.items) {
+                            order.items.forEach(item => {
+                                activeItems.push(`<li><span>${item.name} (x${item.quantity})</span> <b>₹${item.subtotal}</b></li>`);
+                            });
                         }
-                    });
-
-                    const banner = document.getElementById("activeOrdersBanner");
-                    const listEl = document.getElementById("activeOrdersList");
-                    const badgeEl = document.getElementById("activeTotalBadge");
-
-                    if (hasOrders) {
-                        listEl.innerHTML = activeItems.join('');
-                        badgeEl.innerText = `Total: ₹${grandTotal}`;
-                        banner.style.display = "block";
-                    } else {
-                        banner.style.display = "none";
                     }
+                });
+
+                if (hasOrders) {
+                    listEl.innerHTML = activeItems.join('');
+                    badgeEl.innerText = `Total: ₹${grandTotal}`;
+                    banner.style.display = "block";
+                } else {
+                    banner.style.display = "none";
                 }
             } catch (error) {
                 console.error("Active orders fetch error:", error);
@@ -719,14 +723,12 @@
             btn.innerText = "ऑर्डर भेजा जा रहा है...";
 
             try {
-                // 1. Kitchen Live Orders mein bhejo
                 await fetch(FIREBASE_URL + "orders.json", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(orderData)
                 });
 
-                // 2. Billing section mein bhi bhejo taaki customer ke active orders track ho sakein
                 await fetch(FIREBASE_URL + "billing.json", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -739,10 +741,8 @@
                 renderMenu();
                 calculateTotal();
 
-                // Turant active orders banner update karo
                 checkCustomerActiveOrders(customerPhone);
 
-                // 🎮 Open Game Popup Automatically
                 document.getElementById("gameModal").style.display = "flex";
 
             } catch (error) {
