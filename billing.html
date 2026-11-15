@@ -93,13 +93,11 @@
             firebase.initializeApp(firebaseConfig);
         }
 
-        // Session persistence set kiya taaki tab close hone par auto logout ho jaye
         firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
             .catch((error) => {
                 console.error("Persistence error:", error);
             });
 
-        // Page khulte hi check karein ki staff logged-in hai ya nahi
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
                 document.getElementById("staffLoginModal").style.display = "none";
@@ -119,9 +117,7 @@
             }
 
             firebase.auth().signInWithEmailAndPassword(email, pass)
-                .then((userCredential) => {
-                    // Login successful
-                })
+                .then((userCredential) => {})
                 .catch((error) => {
                     alert("❌ Login Failed: " + error.message);
                 });
@@ -134,13 +130,14 @@
         }
 
         const FIREBASE_URL = "https://restaurent-fad84-default-rtdb.firebaseio.com/";
+        const RESTAURANT_UPI_ID = "apki-upi-id@paytm"; // <--- Apni UPI ID yahan daalein
+        const RESTAURANT_NAME = "Shuddh Shakahari Rasoi";
 
         async function fetchBillingData() {
             const user = firebase.auth().currentUser;
-            if (!user) return; // Agar logged in nahi hai toh ruk jao
+            if (!user) return;
 
             try {
-                // Token nikalein taaki database rule allow kare
                 const token = await user.getIdToken();
 
                 const liveRes = await fetch(`${FIREBASE_URL}orders.json?auth=${token}`);
@@ -228,6 +225,20 @@
             let cardClass = type === 'billing' ? 'billing-card' : (type === 'history' ? 'history-card' : '');
             const itemsStr = encodeURIComponent(JSON.stringify(order.items || []));
             
+            let qrCodeHTML = '';
+            if (type === 'billing') {
+                const upiString = `upi://pay?pa=${encodeURIComponent(RESTAURANT_UPI_ID)}&pn=${encodeURIComponent(RESTAURANT_NAME)}&am=${order.totalBill}&cu=INR`;
+                const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiString)}`;
+                
+                qrCodeHTML = `
+                    <div style="text-align: center; margin: 12px 0; padding: 10px; background: #f9f9f9; border-radius: 8px; border: 1px dashed #ccc;">
+                        <p style="font-size: 12px; color: #555; margin-bottom: 5px;">📱 Scan to Pay ₹${order.totalBill}</p>
+                        <img src="${qrImageUrl}" alt="Payment QR Code" style="width: 130px; height: 130px; border-radius: 4px;">
+                        <p style="font-size: 11px; color: #777; margin-top: 4px;">GooglePay / PhonePe / Paytm</p>
+                    </div>
+                `;
+            }
+
             let actionBtn = showPayBtn ? `<button class="btn pay-btn" onclick="paymentDone('${id}')">Payment Done</button>` : '';
             let printBtn = `<button class="btn print-btn" onclick='printBill("${order.customerName}", "${order.tableNumber}", "${order.orderTime}", JSON.parse(decodeURIComponent("${itemsStr}")), ${order.totalBill})'>Print</button>`;
 
@@ -243,6 +254,7 @@
                         </div>
                         <div class="order-time">⏰ ${order.orderTime}</div>
                         <ul class="item-list">${renderItems(order.items)}</ul>
+                        ${qrCodeHTML}
                     </div>
                     <div class="order-footer">
                         <span class="total-price">कुल: ₹${order.totalBill}</span>
