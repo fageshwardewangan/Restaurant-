@@ -51,10 +51,24 @@
             margin-bottom: 18px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             color: #856404;
+            position: relative;
         }
         .active-orders-banner h3 { font-size: 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
         .active-orders-list { font-size: 13px; max-height: 140px; overflow-y: auto; margin-bottom: 10px; list-style: none; }
         .active-orders-list li { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #d4edda; }
+        
+        .clear-orders-btn {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .clear-orders-btn:hover { background: #b71c1c; }
 
         .top-controls {
             background: rgba(255, 255, 255, 0.95);
@@ -382,11 +396,14 @@
     </header>
     
     <div class="container">
-        <!-- Active Orders Banner -->
+        <!-- Active Orders Banner with Clear Button -->
         <div id="activeOrdersBanner" class="active-orders-banner" style="display: none;">
-            <h3>📋 Aapke Active / Pending Orders <span id="activeTotalBadge" style="font-size: 14px; background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 6px;"></span></h3>
+            <h3>
+                <span>📋 Aapke Active / Pending Orders <span id="activeTotalBadge" style="font-size: 14px; background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 6px;"></span></span>
+                <button class="clear-orders-btn" onclick="clearCustomerOrders()">❌ Paid / Clear</button>
+            </h3>
             <ul class="active-orders-list" id="activeOrdersList"></ul>
-            <p style="font-size: 11px; color: #666; text-align: right; margin: 0;">* Yeh orders tab tak dikhenge jab tak counter se payment clear nahi ho jati.</p>
+            <p style="font-size: 11px; color: #666; text-align: right; margin: 0;">* Payment hone ke baad aap khud 'Clear' button dabakar isse hata sakte hain.</p>
         </div>
 
         <div class="customer-info" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 12px; margin-bottom: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
@@ -515,7 +532,7 @@
             checkCustomerActiveOrders(phone);
         }
 
-        // --- LocalStorage se Active Orders Dikhane ka Secure Tareeqa ---
+        // --- Active Orders with 3-Hour Auto-Expiry & Clear Button ---
         function checkCustomerActiveOrders(phone) {
             if (!phone) return;
 
@@ -524,12 +541,24 @@
             const badgeEl = document.getElementById("activeTotalBadge");
 
             let savedOrders = JSON.parse(localStorage.getItem("customerActiveOrders")) || [];
+            
+            const currentTime = new Date().getTime();
+            const expiryHours = 3; // 3 ghante baad order automatic hat jayega
+            const expiryTimeLimit = expiryHours * 60 * 60 * 1000;
 
-            if (savedOrders.length > 0) {
+            // Sirफ wahi orders rakhein jo 3 ghante ke andar ke hain
+            let freshOrders = savedOrders.filter(order => {
+                if (!order.timestamp) return false;
+                return (currentTime - order.timestamp) < expiryTimeLimit;
+            });
+
+            localStorage.setItem("customerActiveOrders", JSON.stringify(freshOrders));
+
+            if (freshOrders.length > 0) {
                 let activeItems = [];
                 let grandTotal = 0;
 
-                savedOrders.forEach(order => {
+                freshOrders.forEach(order => {
                     grandTotal += Number(order.totalBill || 0);
                     if (order.items) {
                         order.items.forEach(item => {
@@ -543,6 +572,13 @@
                 banner.style.display = "block";
             } else {
                 banner.style.display = "none";
+            }
+        }
+
+        function clearCustomerOrders() {
+            if (confirm("Kya aap apna active order clear karna chahte hain?")) {
+                localStorage.removeItem("customerActiveOrders");
+                document.getElementById("activeOrdersBanner").style.display = "none";
             }
         }
 
@@ -702,28 +738,29 @@
                 tableNumber: currentTable,
                 items: orderedItems,
                 totalBill: totalAmount,
-                orderTime: new Date().toLocaleString("hi-IN")
+                orderTime: new Date().toLocaleString("hi-IN"),
+                timestamp: new Date().getTime() // ⏱️ Timestamped for 3-hour expiry
             };
 
             const btn = document.getElementById("placeOrderBtn");
             btn.innerText = "ऑर्डर भेजा जा रहा है...";
 
             try {
-                // 1. Kitchen ke liye orders mein bhejo
-                const res1 = await fetch(FIREBASE_URL + "orders.json", {
+                // 1. Kitchen orders mein bhejo
+                await fetch(FIREBASE_URL + "orders.json", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(orderData)
                 });
 
-                // 2. Billing ke liye billing mein bhejo (Rules secure hone par error aa sakti hai, isliye LocalStorage primary hai)
+                // 2. Billing mein bhejo (optional sync)
                 await fetch(FIREBASE_URL + "billing.json", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(orderData)
                 }).catch(err => console.log("Billing sync ignored"));
 
-                // 3. LocalStorage mein order save karein taaki customer ko turant banner dikhe
+                // 3. LocalStorage mein save karein with timestamp
                 let savedOrders = JSON.parse(localStorage.getItem("customerActiveOrders")) || [];
                 savedOrders.push(orderData);
                 localStorage.setItem("customerActiveOrders", JSON.stringify(savedOrders));
