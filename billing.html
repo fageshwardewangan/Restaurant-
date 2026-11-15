@@ -11,11 +11,22 @@
         header h1 { font-size: 22px; }
         .logout-btn { background: white; color: #007bff; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
         .logout-btn:hover { background: #e7f1ff; }
-        .section-title { margin: 25px 0 15px 0; font-size: 20px; color: #333; border-bottom: 2px solid #ddd; padding-bottom: 5px; }
+
+        /* Navigation Menu Tabs */
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .nav-btn { flex: 1; padding: 12px; border: none; background: #e9ecef; color: #495057; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.3s; }
+        .nav-btn.active { background: #007bff; color: white; box-shadow: 0 4px 10px rgba(0,123,255,0.3); }
+
+        /* Section Layouts */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
         .orders-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
         .order-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-top: 5px solid #007bff; display: flex; flex-direction: column; justify-content: space-between; }
-        .billing-card { border-top: 5px solid #ffc107; }
+        .billing-card { border-top: 5px solid #ffc107; cursor: pointer; transition: transform 0.2s; }
+        .billing-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.15); }
         .history-card { border-top: 5px solid #28a745; background: #fafafa; }
+        
         .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
         .table-badge { background: #e7f1ff; color: #007bff; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 14px; }
         .order-time { font-size: 12px; color: #777; margin-bottom: 10px; }
@@ -24,14 +35,20 @@
         .item-qty { font-weight: bold; color: #007bff; }
         .order-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 12px; }
         .total-price { font-weight: bold; font-size: 16px; }
+        
         .btn { border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
         .pay-btn { background: #28a745; color: white; }
         .pay-btn:hover { background: #218838; }
         .print-btn { background: #17a2b8; color: white; margin-left: 5px; }
         .print-btn:hover { background: #138496; }
+        .back-btn { background: #6c757d; color: white; margin-bottom: 15px; }
         .qr-toggle-btn { background: #ff9800; color: white; margin-bottom: 10px; width: 100%; }
         .qr-toggle-btn:hover { background: #f57c00; }
-        .no-orders { text-align: center; grid-column: 1 / -1; padding: 25px; color: #777; font-size: 15px; background: white; border-radius: 10px; }
+
+        /* Search Bar */
+        .search-box { width: 100%; padding: 12px 15px; font-size: 15px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 20px; outline: none; }
+        
+        .no-orders { text-align: center; grid-column: 1 / -1; padding: 40px; color: #777; font-size: 16px; background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
@@ -58,22 +75,43 @@
     </header>
 
     <div class="container">
-        <!-- 1. Live Orders -->
-        <h2 class="section-title">⚡ Live Orders (Kitchen)</h2>
-        <div class="orders-container" id="liveOrdersContainer">
-            <div class="no-orders">लाइव ऑर्डर्स लोड हो रहे हैं...</div>
+        <!-- Top Navigation Menu Tabs -->
+        <div class="nav-tabs">
+            <button class="nav-btn active" onclick="switchTab('live')">⚡ Live Orders</button>
+            <button class="nav-btn" onclick="switchTab('billing')">💳 Pending Billing</button>
+            <button class="nav-btn" onclick="switchTab('history')">📂 Payment History</button>
         </div>
 
-        <!-- 2. Pending Billing -->
-        <h2 class="section-title">💳 Pending Billing & Payments</h2>
-        <div class="orders-container" id="billingOrdersContainer">
-            <div class="no-orders">पेंडिंग बिल लोड हो रहे हैं...</div>
+        <!-- 1. Live Orders Tab -->
+        <div id="liveTab" class="tab-content active">
+            <h2 class="section-title" style="margin-top:0;">⚡ Live Orders (Kitchen Counter)</h2>
+            <div class="orders-container" id="liveOrdersContainer">
+                <div class="no-orders">लाइव ऑर्डर्स लोड हो रहे हैं...</div>
+            </div>
         </div>
 
-        <!-- 3. Payment History -->
-        <h2 class="section-title">📂 Payment History / Completed Orders</h2>
-        <div class="orders-container" id="historyOrdersContainer">
-            <div class="no-orders">हिस्ट्री लोड हो रही है...</div>
+        <!-- 2. Pending Billing Tab -->
+        <div id="billingTab" class="tab-content">
+            <div id="billingMainView">
+                <h2 class="section-title" style="margin-top:0;">💳 Pending Billing & Payments (Select Customer)</h2>
+                <div class="orders-container" id="billingOrdersContainer">
+                    <div class="no-orders">पेंडिंग बिल लोड हो रहे हैं...</div>
+                </div>
+            </div>
+            <!-- Single Selected Bill Detail View -->
+            <div id="billingDetailView" style="display: none;">
+                <button class="btn back-btn" onclick="backToBillingList()">⬅ Sabhi Pending Bills Par Wapas Jayein</button>
+                <div id="singleBillingCardContainer" style="max-width: 500px; margin: auto;"></div>
+            </div>
+        </div>
+
+        <!-- 3. Payment History Tab -->
+        <div id="historyTab" class="tab-content">
+            <h2 class="section-title" style="margin-top:0;">📂 Payment History / Completed Orders</h2>
+            <input type="text" id="historySearch" class="search-box" placeholder="🔍 Customer name ya mobile number se search karein..." oninput="filterHistory()">
+            <div class="orders-container" id="historyOrdersContainer">
+                <div class="no-orders">हिस्ट्री लोड हो रही है...</div>
+            </div>
         </div>
     </div>
 
@@ -96,9 +134,7 @@
         }
 
         firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
-            .catch((error) => {
-                console.error("Persistence error:", error);
-            });
+            .catch((error) => console.error("Persistence error:", error));
 
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
@@ -112,28 +148,43 @@
         function loginStaff() {
             const email = document.getElementById("staffEmail").value.trim();
             const pass = document.getElementById("staffPass").value.trim();
-
             if (!email || !pass) {
                 alert("Kripya Email aur Password dono bharein!");
                 return;
             }
-
-            firebase.auth().signInWithEmailAndPassword(email, pass)
-                .then((userCredential) => {})
-                .catch((error) => {
-                    alert("❌ Login Failed: " + error.message);
-                });
+            firebase.auth().signInWithEmailAndPassword(email, pass).catch((error) => {
+                alert("❌ Login Failed: " + error.message);
+            });
         }
 
         function logoutStaff() {
-            firebase.auth().signOut().then(() => {
-                location.reload();
-            });
+            firebase.auth().signOut().then(() => location.reload());
         }
 
         const FIREBASE_URL = "https://restaurent-fad84-default-rtdb.firebaseio.com/";
         const RESTAURANT_UPI_ID = "dewanganfageshwar@oksbi"; // <--- Apni UPI ID yahan daalein
         const RESTAURANT_NAME = "Shuddh Shakahari Rasoi";
+
+        let globalBillingData = {}; // Saare pending bills ko store rakhne ke liye
+        let globalHistoryData = {}; // History data search ke liye
+
+        // Tab Switching Logic
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+
+            if (tabName === 'live') {
+                document.querySelector('.nav-btn:nth-child(1)').classList.add('active');
+                document.getElementById('liveTab').classList.add('active');
+            } else if (tabName === 'billing') {
+                document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
+                document.getElementById('billingTab').classList.add('active');
+                backToBillingList(); // Hamesha list view dikhaye
+            } else if (tabName === 'history') {
+                document.querySelector('.nav-btn:nth-child(3)').classList.add('active');
+                document.getElementById('historyTab').classList.add('active');
+            }
+        }
 
         async function fetchBillingData() {
             const user = firebase.auth().currentUser;
@@ -147,13 +198,15 @@
 
                 const billingRes = await fetch(`${FIREBASE_URL}billing.json?auth=${token}`);
                 const billingData = await billingRes.json();
+                globalBillingData = billingData && !billingData.error ? billingData : {};
 
                 const historyRes = await fetch(`${FIREBASE_URL}history.json?auth=${token}`);
                 const historyData = await historyRes.json();
+                globalHistoryData = historyData && !historyData.error ? historyData : {};
 
                 renderLive(liveData && !liveData.error ? liveData : null);
-                renderBilling(billingData && !billingData.error ? billingData : null);
-                renderHistory(historyData && !historyData.error ? historyData : null);
+                renderBillingList(globalBillingData);
+                renderHistory(globalHistoryData);
             } catch (error) {
                 console.error("डेटा फेच करने में एरर:", error);
             }
@@ -170,111 +223,201 @@
             Object.keys(data).forEach(id => {
                 const order = data[id];
                 if (order && order.customerName && order.items) {
-                    container.innerHTML += createCard(id, order, "live", false);
+                    container.innerHTML += createLiveCard(id, order);
                     count++;
                 }
             });
             if (count === 0) container.innerHTML = `<div class="no-orders">कोई नया लाइव ऑर्डर नहीं है।</div>`;
         }
 
-        function renderBilling(data) {
-            const container = document.getElementById("billingOrdersContainer");
-            container.innerHTML = "";
-            if (!data) {
-                container.innerHTML = `<div class="no-orders">कोई पेंडिंग बिल नहीं है।</div>`;
-                return;
-            }
-            let count = 0;
-            Object.keys(data).forEach(id => {
-                const order = data[id];
-                if (order && order.customerName && order.items) {
-                    container.innerHTML += createCard(id, order, "billing", true);
-                    count++;
-                }
+        function createLiveCard(id, order) {
+            let itemsHTML = "";
+            order.items.forEach(i => {
+                itemsHTML += `<li><span>${i.name} (x${i.quantity})</span><span class="item-qty">₹${i.subtotal}</span></li>`;
             });
-            if (count === 0) container.innerHTML = `<div class="no-orders">कोई पेंडिंग बिल नहीं है।</div>`;
-        }
-
-        function renderHistory(data) {
-            const container = document.getElementById("historyOrdersContainer");
-            container.innerHTML = "";
-            if (!data) {
-                container.innerHTML = `<div class="no-orders">कोई पुरानी हिस्ट्री नहीं है।</div>`;
-                return;
-            }
-            let count = 0;
-            Object.keys(data).reverse().forEach(id => {
-                const order = data[id];
-                if (order && order.customerName && order.items) {
-                    container.innerHTML += createCard(id, order, "history", false);
-                    count++;
-                }
-            });
-            if (count === 0) container.innerHTML = `<div class="no-orders">कोई पुरानी हिस्ट्री नहीं है।</div>`;
-        }
-
-        function renderItems(items) {
-            let html = "";
-            if (items) {
-                items.forEach(i => {
-                    html += `<li><span>${i.name} (x${i.quantity})</span><span class="item-qty">₹${i.subtotal}</span></li>`;
-                });
-            }
-            return html;
-        }
-
-        function createCard(id, order, type, showPayBtn) {
-            let cardClass = type === 'billing' ? 'billing-card' : (type === 'history' ? 'history-card' : '');
-            const itemsStr = encodeURIComponent(JSON.stringify(order.items || []));
-            
-            let qrSectionHTML = '';
-            if (type === 'billing') {
-                const upiString = `upi://pay?pa=${encodeURIComponent(RESTAURANT_UPI_ID)}&pn=${encodeURIComponent(RESTAURANT_NAME)}&am=${order.totalBill}&cu=INR`;
-                const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiString)}`;
-                
-                qrSectionHTML = `
-                    <button class="btn qr-toggle-btn" onclick="toggleQR('${id}')">📱 Show QR Code</button>
-                    <div id="qr-box-${id}" style="display: none; text-align: center; margin: 12px 0; padding: 10px; background: #f9f9f9; border-radius: 8px; border: 1px dashed #ccc;">
-                        <p style="font-size: 12px; color: #555; margin-bottom: 5px;">Scan & Pay <b>₹${order.totalBill}</b></p>
-                        <img src="${qrImageUrl}" alt="Payment QR Code" style="width: 130px; height: 130px; border-radius: 4px;">
-                        <p style="font-size: 11px; color: #777; margin-top: 4px;">GooglePay / PhonePe / Paytm</p>
-                    </div>
-                `;
-            }
-
-            let actionBtn = showPayBtn ? `<button class="btn pay-btn" onclick="paymentDone('${id}')">Payment Done</button>` : '';
-            let printBtn = `<button class="btn print-btn" onclick='printBill("${order.customerName}", "${order.tableNumber}", "${order.orderTime}", JSON.parse(decodeURIComponent("${itemsStr}")), ${order.totalBill})'>Print</button>`;
-
             return `
-                <div class="order-card ${cardClass}" id="card-${id}">
+                <div class="order-card" id="card-${id}">
                     <div>
                         <div class="order-header">
                             <div>
                                 <p>Customer: <b>${order.customerName}</b></p>
-                                <p style="font-size: 13px; color: #555;">Mobile No: <b>${order.customerPhone || 'N/A'}</b></p>
+                                <p style="font-size: 13px; color: #555;">Mobile: <b>${order.customerPhone || 'N/A'}</b></p>
                             </div>
                             <span class="table-badge">Table: ${order.tableNumber}</span>
                         </div>
                         <div class="order-time">⏰ ${order.orderTime}</div>
-                        <ul class="item-list">${renderItems(order.items)}</ul>
-                        ${qrSectionHTML}
+                        <ul class="item-list">${itemsHTML}</ul>
                     </div>
                     <div class="order-footer">
                         <span class="total-price">कुल: ₹${order.totalBill}</span>
-                        <div>${actionBtn} ${printBtn}</div>
                     </div>
                 </div>
             `;
         }
 
-        // QR Code toggle karne ka function
-        function toggleQR(id) {
-            const qrBox = document.getElementById(`qr-box-${id}`);
-            if (qrBox.style.display === "none") {
-                qrBox.style.display = "block";
-            } else {
-                qrBox.style.display = "none";
+        // Pending Billing List View
+        function renderBillingList(data) {
+            const container = document.getElementById("billingOrdersContainer");
+            container.innerHTML = "";
+            const keys = Object.keys(data);
+            
+            if (keys.length === 0) {
+                container.innerHTML = `<div class="no-orders">कोई पेंडिंग बिल नहीं है।</div>`;
+                return;
             }
+
+            keys.forEach(id => {
+                const order = data[id];
+                if (order && order.customerName && order.items) {
+                    container.innerHTML += `
+                        <div class="order-card billing-card" onclick="openSingleBill('${id}')">
+                            <div>
+                                <div class="order-header">
+                                    <div>
+                                        <p>Customer: <b>${order.customerName}</b></p>
+                                        <p style="font-size: 13px; color: #555;">Mobile: <b>${order.customerPhone || 'N/A'}</b></p>
+                                    </div>
+                                    <span class="table-badge">Table: ${order.tableNumber}</span>
+                                </div>
+                                <div class="order-time">⏰ ${order.orderTime}</div>
+                                <p style="color: #007bff; font-weight: bold; font-size: 14px; margin-top: 10px;">👉 Bill Dekhne ke liye click karein</p>
+                            </div>
+                            <div class="order-footer" style="margin-top: 15px;">
+                                <span class="total-price">कुल: ₹${order.totalBill}</span>
+                                <span style="font-size: 13px; background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; font-weight: bold;">Pending</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        // Sirf ek chuna hua bill dikhane ke liye
+        function openSingleBill(id) {
+            const order = globalBillingData[id];
+            if (!order) return;
+
+            document.getElementById("billingMainView").style.display = "none";
+            document.getElementById("billingDetailView").style.display = "block";
+
+            const itemsStr = encodeURIComponent(JSON.stringify(order.items || []));
+            const upiString = `upi://pay?pa=${encodeURIComponent(RESTAURANT_UPI_ID)}&pn=${encodeURIComponent(RESTAURANT_NAME)}&am=${order.totalBill}&cu=INR`;
+            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiString)}`;
+
+            let itemsHTML = "";
+            order.items.forEach(i => {
+                itemsHTML += `<li><span>${i.name} (x${i.quantity})</span><span class="item-qty">₹${i.subtotal}</span></li>`;
+            });
+
+            const container = document.getElementById("singleBillingCardContainer");
+            container.innerHTML = `
+                <div class="order-card billing-card" style="border-top-width: 8px;">
+                    <div>
+                        <div class="order-header">
+                            <div>
+                                <p>Customer: <b>${order.customerName}</b></p>
+                                <p style="font-size: 13px; color: #555;">Mobile: <b>${order.customerPhone || 'N/A'}</b></p>
+                            </div>
+                            <span class="table-badge">Table: ${order.tableNumber}</span>
+                        </div>
+                        <div class="order-time">⏰ ${order.orderTime}</div>
+                        <ul class="item-list">${itemsHTML}</ul>
+                        
+                        <!-- QR Code Section -->
+                        <div style="text-align: center; margin: 15px 0; padding: 15px; background: #f9f9f9; border-radius: 8px; border: 1px solid #ddd;">
+                            <p style="font-size: 14px; color: #333; margin-bottom: 8px; font-weight: bold;">📱 Scan & Pay ₹${order.totalBill}</p>
+                            <img src="${qrImageUrl}" alt="Payment QR Code" style="width: 150px; height: 150px; border-radius: 4px;">
+                            <p style="font-size: 12px; color: #666; margin-top: 6px;">GooglePay / PhonePe / Paytm</p>
+                        </div>
+                    </div>
+                    <div class="order-footer">
+                        <span class="total-price" style="font-size: 18px;">कुल: ₹${order.totalBill}</span>
+                        <div>
+                            <button class="btn pay-btn" onclick="paymentDone('${id}')">Payment Done ✓</button>
+                            <button class="btn print-btn" onclick='printBill("${order.customerName}", "${order.tableNumber}", "${order.orderTime}", JSON.parse(decodeURIComponent("${itemsStr}")), ${order.totalBill})'>Print</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function backToBillingList() {
+            document.getElementById("billingDetailView").style.display = "none";
+            document.getElementById("billingMainView").style.display = "block";
+        }
+
+        function renderHistory(data) {
+            const container = document.getElementById("historyOrdersContainer");
+            container.innerHTML = "";
+            const keys = Object.keys(data).reverse();
+
+            if (keys.length === 0) {
+                container.innerHTML = `<div class="no-orders">कोई पुरानी हिस्ट्री नहीं है।</div>`;
+                return;
+            }
+
+            keys.forEach(id => {
+                const order = data[id];
+                if (order && order.customerName && order.items) {
+                    container.innerHTML += createHistoryCard(id, order);
+                }
+            });
+        }
+
+        // History Search Filter
+        function filterHistory() {
+            const query = document.getElementById("historySearch").value.toLowerCase().trim();
+            const container = document.getElementById("historyOrdersContainer");
+            container.innerHTML = "";
+
+            const keys = Object.keys(globalHistoryData).reverse();
+            let count = 0;
+
+            keys.forEach(id => {
+                const order = globalHistoryData[id];
+                if (order && order.customerName && order.items) {
+                    const name = order.customerName.toLowerCase();
+                    const phone = (order.customerPhone || "").toLowerCase();
+
+                    if (name.includes(query) || phone.includes(query)) {
+                        container.innerHTML += createHistoryCard(id, order);
+                        count++;
+                    }
+                }
+            });
+
+            if (count === 0) {
+                container.innerHTML = `<div class="no-orders">कोई matching order nahi mila.</div>`;
+            }
+        }
+
+        function createHistoryCard(id, order) {
+            let itemsHTML = "";
+            order.items.forEach(i => {
+                itemsHTML += `<li><span>${i.name} (x${i.quantity})</span><span class="item-qty">₹${i.subtotal}</span></li>`;
+            });
+            const itemsStr = encodeURIComponent(JSON.stringify(order.items || []));
+            let printBtn = `<button class="btn print-btn" onclick='printBill("${order.customerName}", "${order.tableNumber}", "${order.orderTime}", JSON.parse(decodeURIComponent("${itemsStr}")), ${order.totalBill})'>Print</button>`;
+
+            return `
+                <div class="order-card history-card" id="card-${id}">
+                    <div>
+                        <div class="order-header">
+                            <div>
+                                <p>Customer: <b>${order.customerName}</b></p>
+                                <p style="font-size: 13px; color: #555;">Mobile: <b>${order.customerPhone || 'N/A'}</b></p>
+                            </div>
+                            <span class="table-badge">Table: ${order.tableNumber}</span>
+                        </div>
+                        <div class="order-time">⏰ ${order.orderTime}</div>
+                        <ul class="item-list">${itemsHTML}</ul>
+                    </div>
+                    <div class="order-footer">
+                        <span class="total-price">कुल: ₹${order.totalBill}</span>
+                        <div>${printBtn}</div>
+                    </div>
+                </div>
+            `;
         }
 
         async function paymentDone(orderId) {
@@ -305,6 +448,7 @@
 
                     if (deleteRes.ok) {
                         alert("पेमेंट सफल रहा! ऑर्डर हिस्ट्री में सेव हो गया।");
+                        backToBillingList();
                         fetchBillingData();
                     }
                 } catch (error) {
