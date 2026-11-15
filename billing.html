@@ -320,7 +320,7 @@
                         <div class="order-card" style="border-top: 5px solid #673ab7; background: #f3e5f5; grid-column: 1 / -1;">
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                                 <div>
-                                    <p style="color: #4a148c; font-weight: bold; font-size: 15px;">⚠️ Multiple Orders Found: <b>${grp.customerName} (Table:${grp.tableNumber})</b></p>
+                                    <p style="color: #4a148c; font-weight: bold; font-size: 15px;">⚠️ Multiple Orders Found: <b>${grp.customerName} (Table: ${grp.tableNumber})</b></p>
                                     <p style="font-size: 13px; color: #6a1b9a; margin-top: 2px;">Is customer ke ${grp.orderIds.length} alag-alag orders hain. Customer se confirm karke inka ek sath bill bana sakte hain.</p>
                                 </div>
                                 <button class="btn merge-btn" style="width: auto; margin-top: 0;" onclick='mergeCustomerOrders(${idsStr})'>🔗 Sabhi Orders Ek Sath Merge Karein</button>
@@ -374,7 +374,14 @@
                     orderTime: firstOrder.orderTime + " (Merged)"
                 };
 
-                await fetch(`${FIREBASE_URL}billing/${mergedOrderId}.json?auth=${token}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(mergedOrderData) });  for (let id of orderIds) { await fetch(`${FIREBASE_URL}billing/${id}.json?auth=${token}`, {
+                await fetch(`${FIREBASE_URL}billing/${mergedOrderId}.json?auth=${token}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(mergedOrderData)
+                });
+
+                for (let id of orderIds) {
+                    await fetch(`${FIREBASE_URL}billing/${id}.json?auth=${token}`, {
                         method: "DELETE"
                     });
                 }
@@ -395,7 +402,8 @@
             document.getElementById("billingDetailView").style.display = "block";
 
             const itemsStr = encodeURIComponent(JSON.stringify(order.items || []));
-            const upiString = `upi://pay?pa=${encodeURIComponent(RESTAURANT_UPI_ID)}&pn=${encodeURIComponent(RESTAURANT_NAME)}&am=${order.totalBill}&cu=INR`; const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiString)}`;
+            const upiString = `upi://pay?pa=${encodeURIComponent(RESTAURANT_UPI_ID)}&pn=${encodeURIComponent(RESTAURANT_NAME)}&am=${order.totalBill}&cu=INR`;
+            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiString)}`;
 
             let itemsHTML = "";
             order.items.forEach(i => {
@@ -521,7 +529,21 @@
                 try {
                     const token = await user.getIdToken();
 
-                    const getRes = await fetch(`${FIREBASE_URL}billing/${orderId}.json?auth=${token}`); const orderData = await getRes.json();  if (!orderData) { alert("ऑर्डर डेटा नहीं मिला!"); return; }  await fetch(`${FIREBASE_URL}history.json?auth=${token}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(orderData) });  const deleteRes = await fetch(`${FIREBASE_URL}billing/${orderId}.json?auth=${token}`, {
+                    const getRes = await fetch(`${FIREBASE_URL}billing/${orderId}.json?auth=${token}`);
+                    const orderData = await getRes.json();
+
+                    if (!orderData) {
+                        alert("ऑर्डर डेटा नहीं मिला!");
+                        return;
+                    }
+
+                    await fetch(`${FIREBASE_URL}history.json?auth=${token}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(orderData)
+                    });
+
+                    const deleteRes = await fetch(`${FIREBASE_URL}billing/${orderId}.json?auth=${token}`, {
                         method: "DELETE"
                     });
 
@@ -561,4 +583,48 @@
                         p { text-align: center; font-size: 10px; margin: 2px 0; }
                         .info { margin: 6px 0; font-size: 10px; border-bottom: 1px dashed #000; padding-bottom: 4px; }
                         table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-                        th, td { padding: 3px 0; font-size: 10px; border-bottom:
+                        th, td { padding: 3px 0; font-size: 10px; border-bottom: 1px dashed #ccc; text-align: left; }
+                        .total-section { font-weight: bold; font-size: 12px; text-align: right; margin-top: 6px; border-top: 1px solid #000; padding-top: 4px; }
+                        .footer { text-align: center; font-size: 10px; margin-top: 10px; }
+                    </style>
+                </head>
+                <body>
+                    <h3>SHUDDH SHAKHAHARI RASOI</h3>
+                    <p>Fresh & Hygienic Food</p>
+                    <hr style="border: 0; border-top: 1px dashed #000; margin: 4px 0;">
+                    <div class="info">
+                        <div><b>Customer:</b> ${name}</div>
+                        <div><b>Table:</b> ${table}</div>
+                        <div><b>Time:</b> ${time}</div>
+                    </div>
+                    <table>
+                        <tr>
+                            <th>Item (Qty)</th>
+                            <th style="text-align: right;">Amt</th>
+                        </tr>
+                        ${rows}
+                    </table>
+                    <div class="total-section">
+                        Grand Total: ₹${total}
+                    </div>
+                    <div class="footer">
+                        <p>*** Thank You! Visit Again ***</p>
+                    </div>
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                            window.close();
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            win.document.close();
+        }
+
+        setInterval(() => {
+            fetchBillingData();
+        }, 5000);
+    </script>
+</body>
+</html>
