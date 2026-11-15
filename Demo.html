@@ -515,48 +515,34 @@
             checkCustomerActiveOrders(phone);
         }
 
-        // --- Firebase Active Orders Fetching Function ---
-        async function checkCustomerActiveOrders(phone) {
+        // --- LocalStorage se Active Orders Dikhane ka Secure Tareeqa ---
+        function checkCustomerActiveOrders(phone) {
             if (!phone) return;
-            try {
-                const response = await fetch(FIREBASE_URL + "billing.json");
-                const data = await response.json();
 
-                const banner = document.getElementById("activeOrdersBanner");
-                const listEl = document.getElementById("activeOrdersList");
-                const badgeEl = document.getElementById("activeTotalBadge");
+            const banner = document.getElementById("activeOrdersBanner");
+            const listEl = document.getElementById("activeOrdersList");
+            const badgeEl = document.getElementById("activeTotalBadge");
 
-                if (!data) {
-                    banner.style.display = "none";
-                    return;
-                }
+            let savedOrders = JSON.parse(localStorage.getItem("customerActiveOrders")) || [];
 
+            if (savedOrders.length > 0) {
                 let activeItems = [];
                 let grandTotal = 0;
-                let hasOrders = false;
 
-                Object.keys(data).forEach(id => {
-                    const order = data[id];
-                    if (order && order.customerPhone && order.customerPhone.toString().trim() === phone.toString().trim()) {
-                        hasOrders = true;
-                        grandTotal += Number(order.totalBill || 0);
-                        if (order.items) {
-                            order.items.forEach(item => {
-                                activeItems.push(`<li><span>${item.name} (x${item.quantity})</span> <b>₹${item.subtotal}</b></li>`);
-                            });
-                        }
+                savedOrders.forEach(order => {
+                    grandTotal += Number(order.totalBill || 0);
+                    if (order.items) {
+                        order.items.forEach(item => {
+                            activeItems.push(`<li><span>${item.name} (x${item.quantity})</span> <b>₹${item.subtotal}</b></li>`);
+                        });
                     }
                 });
 
-                if (hasOrders) {
-                    listEl.innerHTML = activeItems.join('');
-                    badgeEl.innerText = `Total: ₹${grandTotal}`;
-                    banner.style.display = "block";
-                } else {
-                    banner.style.display = "none";
-                }
-            } catch (error) {
-                console.error("Active orders fetch error:", error);
+                listEl.innerHTML = activeItems.join('');
+                badgeEl.innerText = `Total: ₹${grandTotal}`;
+                banner.style.display = "block";
+            } else {
+                banner.style.display = "none";
             }
         }
 
@@ -723,17 +709,24 @@
             btn.innerText = "ऑर्डर भेजा जा रहा है...";
 
             try {
-                await fetch(FIREBASE_URL + "orders.json", {
+                // 1. Kitchen ke liye orders mein bhejo
+                const res1 = await fetch(FIREBASE_URL + "orders.json", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(orderData)
                 });
 
+                // 2. Billing ke liye billing mein bhejo (Rules secure hone par error aa sakti hai, isliye LocalStorage primary hai)
                 await fetch(FIREBASE_URL + "billing.json", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(orderData)
-                });
+                }).catch(err => console.log("Billing sync ignored"));
+
+                // 3. LocalStorage mein order save karein taaki customer ko turant banner dikhe
+                let savedOrders = JSON.parse(localStorage.getItem("customerActiveOrders")) || [];
+                savedOrders.push(orderData);
+                localStorage.setItem("customerActiveOrders", JSON.stringify(savedOrders));
 
                 cart = {};
                 document.getElementById("searchInput").value = "";
@@ -743,6 +736,7 @@
 
                 checkCustomerActiveOrders(customerPhone);
 
+                // 🎮 Open Game Popup Automatically
                 document.getElementById("gameModal").style.display = "flex";
 
             } catch (error) {
