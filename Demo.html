@@ -42,20 +42,6 @@
 
         .container { max-width: 900px; margin: 18px auto; padding: 0 15px; }
 
-        /* Active Orders Floating / Top Banner */
-        .active-orders-banner {
-            background: linear-gradient(135deg, #fff3cd, #ffeeba);
-            border: 2px solid #ffecb5;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 18px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            color: #856404;
-        }
-        .active-orders-banner h3 { font-size: 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .active-orders-list { font-size: 13px; max-height: 140px; overflow-y: auto; margin-bottom: 10px; list-style: none; }
-        .active-orders-list li { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #d4edda; }
-
         .top-controls {
             background: rgba(255, 255, 255, 0.95);
             padding: 16px;
@@ -382,13 +368,6 @@
     </header>
     
     <div class="container">
-        <!-- Active Orders Banner -->
-        <div id="activeOrdersBanner" class="active-orders-banner" style="display: none;">
-            <h3>📋 Aapke Active / Pending Orders <span id="activeTotalBadge" style="font-size: 14px; background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 6px;"></span></h3>
-            <ul class="active-orders-list" id="activeOrdersList"></ul>
-            <p style="font-size: 11px; color: #666; text-align: right; margin: 0;">* Yeh orders tab tak dikhenge jab tak counter se payment clear nahi ho jati.</p>
-        </div>
-
         <div class="customer-info" style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 12px; margin-bottom: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
             <div>
                 <p style="font-size: 13px; color: #777;">Welcome,</p>
@@ -490,8 +469,6 @@
                 document.getElementById("customerModal").style.display = "none";
                 document.getElementById("displayCustomerName").innerText = savedName;
                 document.getElementById("displayCustomerPhone").innerText = "📱 " + savedPhone;
-                
-                checkCustomerActiveOrders(savedPhone);
             } else {
                 document.getElementById("customerModal").style.display = "flex";
             }
@@ -511,48 +488,6 @@
             document.getElementById("customerModal").style.display = "none";
             document.getElementById("displayCustomerName").innerText = name;
             document.getElementById("displayCustomerPhone").innerText = "📱 " + phone;
-
-            checkCustomerActiveOrders(phone);
-        }
-
-        async function checkCustomerActiveOrders(phone) {
-            try {
-                const response = await fetch(FIREBASE_URL + "billing.json");
-                const data = await response.json();
-
-                if (data) {
-                    let activeItems = [];
-                    let grandTotal = 0;
-                    let hasOrders = false;
-
-                    Object.keys(data).forEach(id => {
-                        const order = data[id];
-                        if (order && order.customerPhone && order.customerPhone.trim() === phone.trim()) {
-                            hasOrders = true;
-                            grandTotal += Number(order.totalBill || 0);
-                            if (order.items) {
-                                order.items.forEach(item => {
-                                    activeItems.push(`<li><span>${item.name} (x${item.quantity})</span> <b>₹${item.subtotal}</b></li>`);
-                                });
-                            }
-                        }
-                    });
-
-                    const banner = document.getElementById("activeOrdersBanner");
-                    const listEl = document.getElementById("activeOrdersList");
-                    const badgeEl = document.getElementById("activeTotalBadge");
-
-                    if (hasOrders) {
-                        listEl.innerHTML = activeItems.join('');
-                        badgeEl.innerText = `Total: ₹${grandTotal}`;
-                        banner.style.display = "block";
-                    } else {
-                        banner.style.display = "none";
-                    }
-                }
-            } catch (error) {
-                console.error("Active orders fetch error:", error);
-            }
         }
 
         function editDetails() {
@@ -718,28 +653,25 @@
             btn.innerText = "ऑर्डर भेजा जा रहा है...";
 
             try {
-                await fetch(FIREBASE_URL + "orders.json", {
+                const response = await fetch(FIREBASE_URL + "orders.json", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(orderData)
                 });
 
-                await fetch(FIREBASE_URL + "billing.json", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(orderData)
-                });
+                if (response.ok) {
+                    // Order success hone par cart clear karein aur Game Popup khol dein
+                    cart = {};
+                    document.getElementById("searchInput").value = "";
+                    searchQuery = "";
+                    renderMenu();
+                    calculateTotal();
 
-                cart = {};
-                document.getElementById("searchInput").value = "";
-                searchQuery = "";
-                renderMenu();
-                calculateTotal();
-
-                checkCustomerActiveOrders(customerPhone);
-
-                document.getElementById("gameModal").style.display = "flex";
-
+                    // 🎮 Open Game Popup Automatically
+                    document.getElementById("gameModal").style.display = "flex";
+                } else {
+                    alert("ऑर्डर भेजने में समस्या आई।");
+                }
             } catch (error) {
                 alert("त्रुटि: " + error.message);
             } finally {
@@ -752,6 +684,7 @@
             document.getElementById("gameModal").style.display = "none";
         }
 
+        // --- Tic-Tac-Toe Game Logic ---
         let board = ['', '', '', '', '', '', '', '', ''];
         let currentPlayer = 'X';
         let isGameActive = true;
