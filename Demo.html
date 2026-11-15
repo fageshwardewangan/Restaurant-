@@ -400,7 +400,7 @@
         <div id="activeOrdersBanner" class="active-orders-banner" style="display: none;">
             <h3>
                 <span>📋 Aapke Active / Pending Orders <span id="activeTotalBadge" style="font-size: 14px; background: #d4edda; color: #155724; padding: 2px 8px; border-radius: 6px;"></span></span>
-                <button class="clear-orders-btn" onclick="clearCustomerOrders()">❌ Paid / Clear</button>
+                <button class="clear-orders-btn" onclick="clearCustomerOrders()"> ✅ Paid </button>
             </h3>
             <ul class="active-orders-list" id="activeOrdersList"></ul>
             <p style="font-size: 11px; color: #666; text-align: right; margin: 0;">* Payment hone ke baad aap khud 'Clear' button dabakar isse hata sakte hain.</p>
@@ -576,7 +576,7 @@
         }
 
         function clearCustomerOrders() {
-            if (confirm("Kya aap apna active order clear karna chahte hain?")) {
+            if (confirm("क्या आप Payment कर दिया है ?")) {
                 localStorage.removeItem("customerActiveOrders");
                 document.getElementById("activeOrdersBanner").style.display = "none";
             }
