@@ -40,7 +40,7 @@
                 <input type="password" id="staffPass" placeholder="Password" style="width: 100%; padding: 11px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none;">
             </div>
 
-            <button onclick="loginStaff()" style="background: #2e7d32; color: white; border: none; width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px (46,125,50,0.3);">Login Karein ➔</button>
+            <button onclick="loginStaff()" style="background: #2e7d32; color: white; border: none; width: 100%; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(46,125,50,0.3);">Login Karein ➔</button>
         </div>
     </div>
 
@@ -71,7 +71,7 @@
             firebase.initializeApp(firebaseConfig);
         }
 
-        // 1. Session Persistence set kiya taaki tab close hone par auto logout ho jaye
+        // Session Persistence set kiya taaki tab close hone par auto logout ho jaye
         firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
             .catch((error) => {
                 console.error("Persistence error:", error);
@@ -115,17 +115,19 @@
         let previousOrderCount = 0;
 
         async function fetchOrders() {
-            // Agar user logged in nahi hai toh data fetch mat karo
-            if (!firebase.auth().currentUser) return;
+            const user = firebase.auth().currentUser;
+            if (!user) return; // Agar logged in nahi hai toh ruk jao
 
             try {
-                const response = await fetch(FIREBASE_URL + "orders.json");
+                // Token nikalein taaki database rule allow kare
+                const token = await user.getIdToken();
+                const response = await fetch(`${FIREBASE_URL}orders.json?auth=${token}`);
                 const data = await response.json();
                 
                 const container = document.getElementById("ordersContainer");
                 container.innerHTML = "";
 
-                if (!data) {
+                if (!data || data.error) {
                     container.innerHTML = `<div class="no-orders">फिलहाल कोई नया ऑर्डर नहीं है।</div>`;
                     previousOrderCount = 0;
                     return;
@@ -137,7 +139,6 @@
                 orderIds.forEach(orderId => {
                     const order = data[orderId];
                     
-                    // 2. CHECK: Agar order valid nahi hai (jaise undefined ya khali data), toh use skip kar do
                     if (!order || !order.customerName || !order.items) {
                         return;
                     }
@@ -185,9 +186,14 @@
         }
 
         async function completeOrder(orderId) {
+            const user = firebase.auth().currentUser;
+            if (!user) return;
+
             if (confirm("क्या यह ऑर्डर पूरा हो गया है? इसे Billing Counter पर भेजें?")) {
                 try {
-                    const getRes = await fetch(FIREBASE_URL + `orders/${orderId}.json`);
+                    const token = await user.getIdToken();
+
+                    const getRes = await fetch(`${FIREBASE_URL}orders/${orderId}.json?auth=${token}`);
                     const orderData = await getRes.json();
 
                     if (!orderData) {
@@ -195,13 +201,13 @@
                         return;
                     }
 
-                    await fetch(FIREBASE_URL + "billing.json", {
+                    await fetch(`${FIREBASE_URL}billing.json?auth=${token}`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(orderData)
                     });
 
-                    const deleteRes = await fetch(FIREBASE_URL + `orders/${orderId}.json`, {
+                    const deleteRes = await fetch(`${FIREBASE_URL}orders/${orderId}.json?auth=${token}`, {
                         method: "DELETE"
                     });
 
