@@ -9,6 +9,9 @@
         body { background-color: #f4f6f9; color: #333; padding: 20px; }
         header { background-color: #b71c1c; color: white; text-align: center; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
         header h1 { font-size: 22px; }
+        .header-actions { display: flex; gap: 10px; align-items: center; }
+        .audio-btn { background: #ffeb3b; color: #333; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        .audio-btn:hover { background: #fdd835; }
         .logout-btn { background: white; color: #b71c1c; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; }
         .logout-btn:hover { background: #ffebee; }
         .orders-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
@@ -46,7 +49,10 @@
 
     <header>
         <h1>👨‍🍳 Kitchen Live Orders Counter</h1>
-        <button class="logout-btn" onclick="logoutStaff()">Logout 🚪</button>
+        <div class="header-actions">
+            <button class="audio-btn" id="audioEnableBtn" onclick="enableAudio()">🔊 Enable Audio</button>
+            <button class="logout-btn" onclick="logoutStaff()">Logout 🚪</button>
+        </div>
     </header>
 
     <div class="orders-container" id="ordersContainer">
@@ -58,6 +64,7 @@
     <!-- Firebase SDK v8 Scripts -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
         const firebaseConfig = {
@@ -71,17 +78,28 @@
             firebase.initializeApp(firebaseConfig);
         }
 
-        // Session Persistence set kiya taaki tab close hone par auto logout ho jaye
+        // Session Persistence set kiya taكية tab close hone par auto logout ho jaye
         firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
             .catch((error) => {
                 console.error("Persistence error:", error);
             });
 
+        // Audio unlock karne ka function taaki browser sound block na kare
+        function enableAudio() {
+            const sound = document.getElementById("notificationSound");
+            sound.play().then(() => {
+                sound.pause();
+                sound.currentTime = 0;
+                document.getElementById("audioEnableBtn").style.display = "none";
+                alert("🔊 Sound Enabled Successfully!");
+            }).catch(e => console.log("Audio unlock failed:", e));
+        }
+
         // Page khulte hi check karein ki staff logged-in hai ya nahi
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
                 document.getElementById("staffLoginModal").style.display = "none";
-                fetchOrders();
+                initRealtimeOrders();
             } else {
                 document.getElementById("staffLoginModal").style.display = "flex";
             }
@@ -97,9 +115,6 @@
             }
 
             firebase.auth().signInWithEmailAndPassword(email, pass)
-                .then((userCredential) => {
-                    // Login successful
-                })
                 .catch((error) => {
                     alert("❌ Login Failed: " + error.message);
                 });
@@ -112,24 +127,21 @@
         }
 
         const FIREBASE_URL = "https://restaurent-fad84-default-rtdb.firebaseio.com/";
-        let previousOrderCount = 0;
+        let isInitialLoad = true;
 
-        async function fetchOrders() {
-            const user = firebase.auth().currentUser;
-            if (!user) return; // Agar logged in nahi hai toh ruk jao
+        // 🚀 Real-time WebSockets Listener (Instant orders & sound alert)
+        function initRealtimeOrders() {
+            const dbRef = firebase.database().ref('orders');
 
-            try {
-                // Token nikalein taaki database rule allow kare
-                const token = await user.getIdToken();
-                const response = await fetch(`${FIREBASE_URL}orders.json?auth=${token}`);
-                const data = await response.json();
-                
+            // Jab bhi koi naya order add hoga ya change hoga, ye turant chalega
+            dbRef.on('value', (snapshot) => {
+                const data = snapshot.val();
                 const container = document.getElementById("ordersContainer");
                 container.innerHTML = "";
 
-                if (!data || data.error) {
+                if (!data) {
                     container.innerHTML = `<div class="no-orders">फिलहाल कोई नया ऑर्डर नहीं है।</div>`;
-                    previousOrderCount = 0;
+                    isInitialLoad = false;
                     return;
                 }
 
@@ -138,10 +150,7 @@
 
                 orderIds.forEach(orderId => {
                     const order = data[orderId];
-                    
-                    if (!order || !order.customerName || !order.items) {
-                        return;
-                    }
+                    if (!order || !order.customerName || !order.items) return;
 
                     validOrdersCount++;
                     let itemsHTML = "";
@@ -172,17 +181,13 @@
 
                 if (validOrdersCount === 0) {
                     container.innerHTML = `<div class="no-orders">फिलहाल कोई नया ऑर्डर नहीं है।</div>`;
-                    previousOrderCount = 0;
-                } else {
-                    if (validOrdersCount > previousOrderCount && previousOrderCount !== 0) {
-                        playAlertSound();
-                    }
-                    previousOrderCount = validOrdersCount;
+                } else if (!isInitialLoad) {
+                    // Agar pehle load ho chuka hai aur naya order aaya hai toh beep bajao
+                    playAlertSound();
                 }
 
-            } catch (error) {
-                console.error("एरर:", error);
-            }
+                isInitialLoad = false;
+            });
         }
 
         async function completeOrder(orderId) {
@@ -214,7 +219,6 @@
                     if (deleteRes.ok) {
                         const card = document.getElementById(`card-${orderId}`);
                         if(card) card.remove();
-                        fetchOrders();
                         alert("ऑर्डर सफलतापूर्वक Billing Counter पर भेज दिया गया है!");
                     }
                 } catch (error) {
@@ -224,12 +228,10 @@
         }
 
         function playAlertSound() {
-            document.getElementById("notificationSound").play().catch(e => console.log(e));
+            const sound = document.getElementById("notificationSound");
+            sound.currentTime = 0;
+            sound.play().catch(e => console.log("Sound play error (User interaction needed):", e));
         }
-
-        setInterval(() => {
-            fetchOrders();
-        }, 5000);
     </script>
 </body>
 </html>
