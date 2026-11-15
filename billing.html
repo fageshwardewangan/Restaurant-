@@ -29,6 +29,8 @@
         .pay-btn:hover { background: #218838; }
         .print-btn { background: #17a2b8; color: white; margin-left: 5px; }
         .print-btn:hover { background: #138496; }
+        .qr-toggle-btn { background: #ff9800; color: white; margin-bottom: 10px; width: 100%; }
+        .qr-toggle-btn:hover { background: #f57c00; }
         .no-orders { text-align: center; grid-column: 1 / -1; padding: 25px; color: #777; font-size: 15px; background: white; border-radius: 10px; }
     </style>
 </head>
@@ -225,14 +227,15 @@
             let cardClass = type === 'billing' ? 'billing-card' : (type === 'history' ? 'history-card' : '');
             const itemsStr = encodeURIComponent(JSON.stringify(order.items || []));
             
-            let qrCodeHTML = '';
+            let qrSectionHTML = '';
             if (type === 'billing') {
                 const upiString = `upi://pay?pa=${encodeURIComponent(RESTAURANT_UPI_ID)}&pn=${encodeURIComponent(RESTAURANT_NAME)}&am=${order.totalBill}&cu=INR`;
                 const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiString)}`;
                 
-                qrCodeHTML = `
-                    <div style="text-align: center; margin: 12px 0; padding: 10px; background: #f9f9f9; border-radius: 8px; border: 1px dashed #ccc;">
-                        <p style="font-size: 12px; color: #555; margin-bottom: 5px;">📱 Scan to Pay ₹${order.totalBill}</p>
+                qrSectionHTML = `
+                    <button class="btn qr-toggle-btn" onclick="toggleQR('${id}')">📱 Show QR Code</button>
+                    <div id="qr-box-${id}" style="display: none; text-align: center; margin: 12px 0; padding: 10px; background: #f9f9f9; border-radius: 8px; border: 1px dashed #ccc;">
+                        <p style="font-size: 12px; color: #555; margin-bottom: 5px;">Scan & Pay <b>₹${order.totalBill}</b></p>
                         <img src="${qrImageUrl}" alt="Payment QR Code" style="width: 130px; height: 130px; border-radius: 4px;">
                         <p style="font-size: 11px; color: #777; margin-top: 4px;">GooglePay / PhonePe / Paytm</p>
                     </div>
@@ -254,7 +257,7 @@
                         </div>
                         <div class="order-time">⏰ ${order.orderTime}</div>
                         <ul class="item-list">${renderItems(order.items)}</ul>
-                        ${qrCodeHTML}
+                        ${qrSectionHTML}
                     </div>
                     <div class="order-footer">
                         <span class="total-price">कुल: ₹${order.totalBill}</span>
@@ -262,6 +265,16 @@
                     </div>
                 </div>
             `;
+        }
+
+        // QR Code toggle karne ka function
+        function toggleQR(id) {
+            const qrBox = document.getElementById(`qr-box-${id}`);
+            if (qrBox.style.display === "none") {
+                qrBox.style.display = "block";
+            } else {
+                qrBox.style.display = "none";
+            }
         }
 
         async function paymentDone(orderId) {
