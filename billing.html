@@ -255,7 +255,7 @@
             `;
         }
 
-        // Pending Billing List View (Individual orders shown + Group Merge option)
+        // Pending Billing List View
         function renderBillingList(data) {
             const container = document.getElementById("billingOrdersContainer");
             container.innerHTML = "";
@@ -266,7 +266,6 @@
                 return;
             }
 
-            // Customer Name + Table ke hisaab se group banayein taaki pata chale kiske multiple orders hain
             let groups = {};
             keys.forEach(id => {
                 const order = data[id];
@@ -279,11 +278,10 @@
                 }
             });
 
-            // 1. Pehle saare individual pending orders alag-alag dikhayein
+            // 1. Saare individual pending orders
             keys.forEach(id => {
                 const order = data[id];
                 if (order && order.customerName && order.items) {
-                    const itemsStr = encodeURIComponent(JSON.stringify(order.items || []));
                     let itemsHTML = "";
                     order.items.forEach(i => {
                         itemsHTML += `<li><span>${i.name} (x${i.quantity})</span><span class="item-qty">₹${i.subtotal}</span></li>`;
@@ -313,17 +311,16 @@
                 }
             });
 
-            // 2. Agar kisi customer ke ek se zyada orders hain, toh niche ek special "Merge Box" dikhayein taaki staff customer se confirm karke merge kar sake
+            // 2. Multiple orders hone par merge alert banner
             Object.keys(groups).forEach(key => {
                 const grp = groups[key];
                 if (grp.orderIds.length > 1) {
                     const idsStr = JSON.stringify(grp.orderIds);
-                    // Ek alag container mein banner ya card jo bataye ki is customer ke multiple orders hain
                     container.innerHTML += `
                         <div class="order-card" style="border-top: 5px solid #673ab7; background: #f3e5f5; grid-column: 1 / -1;">
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                                 <div>
-                                    <p style="color: #4a148c; font-weight: bold; font-size: 15px;">⚠️ Multiple Orders Found: <b>${grp.customerName} (Table: ${grp.tableNumber})</b></p>
+                                    <p style="color: #4a148c; font-weight: bold; font-size: 15px;">⚠️ Multiple Orders Found: <b>${grp.customerName} (Table:${grp.tableNumber})</b></p>
                                     <p style="font-size: 13px; color: #6a1b9a; margin-top: 2px;">Is customer ke ${grp.orderIds.length} alag-alag orders hain. Customer se confirm karke inka ek sath bill bana sakte hain.</p>
                                 </div>
                                 <button class="btn merge-btn" style="width: auto; margin-top: 0;" onclick='mergeCustomerOrders(${idsStr})'>🔗 Sabhi Orders Ek Sath Merge Karein</button>
@@ -334,7 +331,6 @@
             });
         }
 
-        // Multiple Orders ko ek sath merge karne ka function
         async function mergeCustomerOrders(orderIds) {
             const user = firebase.auth().currentUser;
             if (!user) return;
@@ -378,14 +374,7 @@
                     orderTime: firstOrder.orderTime + " (Merged)"
                 };
 
-                await fetch(`${FIREBASE_URL}billing/${mergedOrderId}.json?auth=${token}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(mergedOrderData)
-                });
-
-                for (let id of orderIds) {
-                    await fetch(`${FIREBASE_URL}billing/${id}.json?auth=${token}`, {
+                await fetch(`${FIREBASE_URL}billing/${mergedOrderId}.json?auth=${token}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(mergedOrderData) });  for (let id of orderIds) { await fetch(`${FIREBASE_URL}billing/${id}.json?auth=${token}`, {
                         method: "DELETE"
                     });
                 }
@@ -398,7 +387,6 @@
             }
         }
 
-        // Sirf ek chuna hua bill dikhane ke liye
         function openSingleBill(id) {
             const order = globalBillingData[id];
             if (!order) return;
@@ -407,8 +395,7 @@
             document.getElementById("billingDetailView").style.display = "block";
 
             const itemsStr = encodeURIComponent(JSON.stringify(order.items || []));
-            const upiString = `upi://pay?pa=${encodeURIComponent(RESTAURANT_UPI_ID)}&pn=${encodeURIComponent(RESTAURANT_NAME)}&am=${order.totalBill}&cu=INR`;
-            const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiString)}`;
+            const upiString = `upi://pay?pa=${encodeURIComponent(RESTAURANT_UPI_ID)}&pn=${encodeURIComponent(RESTAURANT_NAME)}&am=${order.totalBill}&cu=INR`; const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiString)}`;
 
             let itemsHTML = "";
             order.items.forEach(i => {
@@ -471,7 +458,6 @@
             });
         }
 
-        // History Search Filter
         function filterHistory() {
             const query = document.getElementById("historySearch").value.toLowerCase().trim();
             const container = document.getElementById("historyOrdersContainer");
@@ -535,21 +521,7 @@
                 try {
                     const token = await user.getIdToken();
 
-                    const getRes = await fetch(`${FIREBASE_URL}billing/${orderId}.json?auth=${token}`);
-                    const orderData = await getRes.json();
-
-                    if (!orderData) {
-                        alert("ऑर्डर डेटा नहीं मिला!");
-                        return;
-                    }
-
-                    await fetch(`${FIREBASE_URL}history.json?auth=${token}`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(orderData)
-                    });
-
-                    const deleteRes = await fetch(`${FIREBASE_URL}billing/${orderId}.json?auth=${token}`, {
+                    const getRes = await fetch(`${FIREBASE_URL}billing/${orderId}.json?auth=${token}`); const orderData = await getRes.json();  if (!orderData) { alert("ऑर्डर डेटा नहीं मिला!"); return; }  await fetch(`${FIREBASE_URL}history.json?auth=${token}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(orderData) });  const deleteRes = await fetch(`${FIREBASE_URL}billing/${orderId}.json?auth=${token}`, {
                         method: "DELETE"
                     });
 
@@ -564,28 +536,29 @@
             }
         }
 
+        // --- 58mm Thermal Printer Optimized Print Function ---
         function printBill(name, table, time, items, total) {
-            const win = window.open('', '', 'height=600,width=400');
+            const win = window.open('', '', 'height=500,width=300');
             let rows = '';
             items.forEach(i => {
                 rows += `<tr><td>${i.name} (${i.quantity})</td><td style="text-align: right;">₹${i.subtotal}</td></tr>`;
             });
             win.document.write(`
-                <html><head><title>Invoice</title><style>body{font-family:monospace;padding:10px;width:300px;margin:auto;}h2,p{text-align:center;margin:5px 0;}table{width:100%;border-collapse:collapse;margin-top:10px;}th,td{padding:5px;font-size:13px;border-bottom:1px dashed #ccc; text-align:left;}.total{font-weight:bold;font-size:15px;text-align:right;margin-top:10px;}</style></head>
-                <body>
-                    <h2>Restaurant Tax Invoice</h2><hr>
-                    <p><b>Name:</b> ${name} | <b>Table:</b> ${table}</p>
-                    <p><b>Time:</b> ${time}</p><table><tr><th>Item</th><th style="text-align:right;">Amt</th></tr>${rows}</table>
-                    <div class="total">Total: ₹${total}</div><hr><p style="text-align:center;font-size:12px;">Thank You! Visit Again.</p>
-                    <script>window.onload=function(){window.print();window.close();}<\/script>
-                </body></html>
-            `);
-            win.document.close();
-        }
-
-        setInterval(() => {
-            fetchBillingData();
-        }, 5000);
-    </script>
-</body>
-</html>
+                <html>
+                <head>
+                    <title>58mm Thermal Receipt</title>
+                    <style>
+                        @page { size: 58mm auto; margin: 0; }
+                        body { 
+                            font-family: 'Courier New', Courier, monospace; 
+                            font-size: 11px; 
+                            width: 54mm; 
+                            margin: 2mm auto; 
+                            padding: 0;
+                            color: #000;
+                        }
+                        h3 { text-align: center; font-size: 13px; margin: 0 0 4px 0; }
+                        p { text-align: center; font-size: 10px; margin: 2px 0; }
+                        .info { margin: 6px 0; font-size: 10px; border-bottom: 1px dashed #000; padding-bottom: 4px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+                        th, td { padding: 3px 0; font-size: 10px; border-bottom:
