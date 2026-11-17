@@ -599,7 +599,9 @@
             <span id="currentCategoryTitle">🍽️ All Menu Items</span>
         </div>
         
-        <div class="menu-list" id="menuContainer"></div>
+        <div class="menu-list" id="menuContainer">
+            <div class="no-results">Menu load ho raha hai...</div>
+        </div>
     </div>
 
     <div class="bottom-bar">
@@ -629,37 +631,7 @@
         const currentTable = getTableFromURL();
         document.getElementById("tableBadge").innerText = "🪑 " + currentTable;
 
-        const menuItems = [
-            { id: 13, category: "Starter", name: "वेज मंचूरियन (Veg Manchurian)", price: 160, img: "https://images.unsplash.com/photo-1625394049853-2cf2c2a07c1b?w=500&auto=format&fit=crop&q=60" },
-            { id: 14, category: "Starter", name: "पनीर चिल्ली (Paneer Chilli)", price: 200, img: "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=500&auto=format&fit=crop&q=60" },
-            { id: 16, category: "Starter", name: "क्रिस्पी कॉर्न (Crispy Corn)", price: 150, img: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=500&auto=format&fit=crop&q=60" },
-            { id: 17, category: "Starter", name: "पनीर टिक्का (Paneer Tikka)", price: 220, img: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=500&auto=format&fit=crop&q=60" },
-
-            { id: 1, category: "Main Course", name: "पनीर बटर मसाला (Paneer Butter Masala)", price: 220, img: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=500&auto=format&fit=crop&q=60" },
-            { id: 2, category: "Main Course", name: "कड़ाही पनीर (Kadai Paneer)", price: 230, img: "https://images.unsplash.com/photo-1596797038530-2c107229654b?w=500&auto=format&fit=crop&q=60" },
-            { id: 3, category: "Main Course", name: "शाही पनीर (Shahi Paneer)", price: 240, img: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500&auto=format&fit=crop&q=60" },
-            { id: 4, category: "Main Course", name: "दाल तड़का (Dal Tadka)", price: 140, img: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&auto=format&fit=crop&q=60" },
-            { id: 5, category: "Main Course", name: "दाल मखनी (Dal Makhani)", price: 180, img: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=500&auto=format&fit=crop&q=60" },
-            { id: 6, category: "Main Course", name: "मिक्स वेज (Mix Veg)", price: 170, img: "https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=60" },
-            { id: 7, category: "Main Course", name: "आलू गोभी मसाला (Aloo Gobi)", price: 150, img: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=500&auto=format&fit=crop&q=60" },
-            { id: 8, category: "Main Course", name: "मटर मशरूम (Matar Mushroom)", price: 210, img: "https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=500&auto=format&fit=crop&q=60" },
-
-            { id: 9, category: "Breads & Rice", name: "वेज बिरयानी (Veg Biryani)", price: 190, img: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&auto=format&fit=crop&q=60" },
-            { id: 10, category: "Breads & Rice", name: "जीरा राइस (Jeera Rice)", price: 120, img: "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=500&auto=format&fit=crop&q=60" },
-            { id: 11, category: "Breads & Rice", name: "बटर नान (Butter Naan)", price: 45, img: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=500&auto=format&fit=crop&q=60" },
-            { id: 12, category: "Breads & Rice", name: "तंदूरी रोटी (Tandoori Roti)", price: 20, img: "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500&auto=format&fit=crop&q=60" },
-
-            { id: 18, category: "Shakes", name: "चॉकलेट शेक (Chocolate Shake)", price: 110, img: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=500&auto=format&fit=crop&q=60" },
-            { id: 19, category: "Shakes", name: "ओरियो शेक (Oreo Shake)", price: 130, img: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=500&auto=format&fit=crop&q=60" },
-            { id: 20, category: "Shakes", name: "मैंगो शेक (Mango Shake)", price: 100, img: "https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=500&auto=format&fit=crop&q=60" },
-            { id: 21, category: "Shakes", name: "कोल्ड कॉफी (Cold Coffee)", price: 90, img: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=500&auto=format&fit=crop&q=60" },
-
-            { id: 15, category: "Ice Cream & Sweets", name: "गुलाब जामुन - 2 पीस (Gulab Jamun)", price: 60, img: "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=500&auto=format&fit=crop&q=60" },
-            { id: 22, category: "Ice Cream & Sweets", name: "वेनिला आइसक्रीम (Vanilla Ice Cream)", price: 70, img: "https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=500&auto=format&fit=crop&q=60" },
-            { id: 23, category: "Ice Cream & Sweets", name: "चॉकलेट आइसक्रीम (Chocolate Ice Cream)", price: 85, img: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=500&auto=format&fit=crop&q=60" },
-            { id: 24, category: "Ice Cream & Sweets", name: "स्ट्रॉबेरी आइसक्रीम (Strawberry Ice Cream)", price: 80, img: "https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=500&auto=format&fit=crop&q=60" }
-        ];
-
+        let menuItemsMap = {}; // Firebase se aane wala live menu data store karne ke liye
         let cart = {};
         let selectedCategory = "All";
         let searchQuery = "";
@@ -677,8 +649,22 @@
             } else {
                 document.getElementById("customerModal").style.display = "flex";
             }
-            renderMenu();
+            
+            // Firebase se live menu fetch karein
+            fetchLiveMenu();
         };
+
+        async function fetchLiveMenu() {
+            try {
+                const res = await fetch(`${FIREBASE_URL}menu.json`);
+                const data = await res.json();
+                menuItemsMap = data && !data.error ? data : {};
+                renderMenu();
+            } catch (error) {
+                console.error("Menu fetch error:", error);
+                document.getElementById("menuContainer").innerHTML = `<div class="no-results">❌ Menu load karne mein samasya aayi.</div>`;
+            }
+        }
 
         function saveCustomerDetails() {
             const name = document.getElementById("popupName").value.trim();
@@ -772,41 +758,66 @@
             const container = document.getElementById("menuContainer");
             container.innerHTML = "";
 
-            const filteredItems = menuItems.filter(item => {
-                const matchesCategory = (selectedCategory === "All") || (item.category === selectedCategory);
-                const matchesSearch = item.name.toLowerCase().includes(searchQuery) || item.category.toLowerCase().includes(searchQuery);
-                return matchesCategory && matchesSearch;
-            });
-
-            if (filteredItems.length === 0) {
-                container.innerHTML = `<div class="no-results">😕 इस नाम से कोई आइटम नहीं मिला।</div>`;
+            const keys = Object.keys(menuItemsMap);
+            if (keys.length === 0) {
+                container.innerHTML = `<div class="no-results">😕 Abhi menu mein koi item uplabdh nahi hai.</div>`;
                 return;
             }
 
-            filteredItems.forEach(item => {
-                const qty = cart[item.id] || 0;
-                container.innerHTML += `
-                    <div class="menu-item">
-                        <div class="item-img-container">
-                            <img src="${item.img}" alt="${item.name}" loading="lazy">
-                            <span class="cat-tag">${item.category}</span>
-                        </div>
-                        <div class="item-content">
-                            <div class="item-details">
-                                <h3><span class="veg-icon"></span> ${item.name}</h3>
+            let filteredCount = 0;
+
+            keys.forEach(id => {
+                const item = menuItemsMap[id];
+                if (!item || !item.name) return;
+
+                const matchesCategory = (selectedCategory === "All") || (item.category === selectedCategory);
+                const matchesSearch = item.name.toLowerCase().includes(searchQuery) || (item.category && item.category.toLowerCase().includes(searchQuery));
+
+                if (matchesCategory && matchesSearch) {
+                    filteredCount++;
+                    const qty = cart[id] || 0;
+                    const isAvailable = item.available !== false; // true or undefined = available
+                    
+                    // Default image agar counter se image nahi di gayi ho
+                    const itemImg = item.img || "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=500&auto=format&fit=crop&q=60";
+                    const typeIcon = item.type === 'Non-Veg' ? '<span style="color:red; font-size:10px;">🔴</span>' : '<span class="veg-icon"></span>';
+
+                    let controlsHTML = "";
+                    if (isAvailable) {
+                        controlsHTML = `
+                            <div class="qty-controls">
+                                <button class="qty-btn" onclick="updateQty('${id}', -1)">-</button>
+                                <span class="qty-count" id="qty-${id}">${qty}</span>
+                                <button class="qty-btn" onclick="updateQty('${id}', 1)">+</button>
                             </div>
-                            <div class="item-footer-row">
-                                <div class="price">₹${item.price}</div>
-                                <div class="qty-controls">
-                                    <button class="qty-btn" onclick="updateQty(${item.id}, -1)">-</button>
-                                    <span class="qty-count" id="qty-${item.id}">${qty}</span>
-                                    <button class="qty-btn" onclick="updateQty(${item.id}, 1)">+</button>
+                        `;
+                    } else {
+                        controlsHTML = `<span style="font-size: 12px; font-weight: 700; color: var(--accent); background: #fee2e2; padding: 6px 12px; border-radius: 8px;">Out of Stock</span>`;
+                    }
+
+                    container.innerHTML += `
+                        <div class="menu-item" style="opacity: ${isAvailable ? '1' : '0.75'};">
+                            <div class="item-img-container">
+                                <img src="${itemImg}" alt="${item.name}" loading="lazy">
+                                <span class="cat-tag">${item.category || 'General'}</span>
+                            </div>
+                            <div class="item-content">
+                                <div class="item-details">
+                                    <h3>${typeIcon} ${item.name}</h3>
+                                </div>
+                                <div class="item-footer-row">
+                                    <div class="price">₹${item.price}</div>
+                                    ${controlsHTML}
                                 </div>
                             </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
             });
+
+            if (filteredCount === 0) {
+                container.innerHTML = `<div class="no-results">😕 इस नाम से कोई आइटम नहीं मिला।</div>`;
+            }
         }
 
         function updateQty(id, change) {
@@ -822,8 +833,11 @@
 
         function calculateTotal() {
             let total = 0;
-            menuItems.forEach(item => {
-                total += item.price * (cart[item.id] || 0);
+            Object.keys(menuItemsMap).forEach(id => {
+                const item = menuItemsMap[id];
+                if (item && item.price) {
+                    total += Number(item.price) * (cart[id] || 0);
+                }
             });
             document.getElementById("totalAmount").innerText = total;
             return total;
@@ -859,11 +873,12 @@
             let modalTotal = 0;
             let hasItems = false;
 
-            menuItems.forEach(item => {
-                const qty = cart[item.id] || 0;
-                if (qty > 0) {
+            Object.keys(menuItemsMap).forEach(id => {
+                const item = menuItemsMap[id];
+                const qty = cart[id] || 0;
+                if (qty > 0 && item) {
                     hasItems = true;
-                    const subtotal = item.price * qty;
+                    const subtotal = Number(item.price) * qty;
                     modalTotal += subtotal;
 
                     listEl.innerHTML += `
@@ -873,9 +888,9 @@
                                 <div class="cart-item-price">₹${item.price} × ${qty} = <b>₹${subtotal}</b></div>
                             </div>
                             <div class="qty-controls">
-                                <button class="qty-btn" onclick="updateCartModalQty(${item.id}, -1)">-</button>
+                                <button class="qty-btn" onclick="updateCartModalQty('${id}', -1)">-</button>
                                 <span class="qty-count">${qty}</span>
-                                <button class="qty-btn" onclick="updateCartModalQty(${item.id}, 1)">+</button>
+                                <button class="qty-btn" onclick="updateCartModalQty('${id}', 1)">+</button>
                             </div>
                         </li>
                     `;
@@ -896,7 +911,6 @@
             cart[id] += change;
             if (cart[id] < 0) cart[id] = 0;
 
-            // Sync with main menu quantity indicator if visible
             const qtyEl = document.getElementById(`qty-${id}`);
             if (qtyEl) qtyEl.innerText = cart[id];
 
@@ -966,9 +980,10 @@
             const customerNote = document.getElementById("customerNote").value.trim(); 
 
             let orderedItems = [];
-            menuItems.forEach(item => {
-                if (cart[item.id] > 0) {
-                    orderedItems.push({ name: item.name, price: item.price, quantity: cart[item.id], subtotal: item.price * cart[item.id] });
+            Object.keys(menuItemsMap).forEach(id => {
+                if (cart[id] > 0) {
+                    const item = menuItemsMap[id];
+                    orderedItems.push({ name: item.name, price: item.price, quantity: cart[id], subtotal: Number(item.price) * cart[id] });
                 }
             });
 
@@ -1012,7 +1027,6 @@
 
                 checkCustomerActiveOrders(customerPhone);
 
-                // ✨ Trigger Game Popup Modal after successful order placement
                 document.getElementById("gameModal").style.display = "flex";
 
             } catch (error) {
