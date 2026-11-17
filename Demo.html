@@ -522,6 +522,10 @@
                     <span>Grand Total:</span>
                     <span id="cartModalTotal" style="color: var(--primary);">₹0</span>
                 </div>
+                <!-- Special Instructions / Notes Box -->
+                <div class="input-group">
+                    <textarea id="customerNote" placeholder="✍️ Special Instructions / Note (उदा. Mirchi kam rakhna, Extra spicy, etc.)..."></textarea>
+                </div>
                 <button class="cart-confirm-btn" id="finalConfirmOrderBtn" onclick="verifyLocationAndOrder()">Final Confirm & Place Order 🚀</button>
             </div>
         </div>
@@ -579,10 +583,6 @@
         <div class="top-controls">
             <div class="input-group">
                 <input type="text" id="searchInput" placeholder="🔍 खाना खोजें (Search Paneer, Shake, Ice Cream...)" onkeyup="handleSearch()">
-            </div>
-            <!-- Special Instructions / Notes Box -->
-            <div class="input-group">
-                <textarea id="customerNote" placeholder="✍️ Special Instructions / Note (उदा. Mirchi kam rakhna, Extra spicy, etc.)..."></textarea>
             </div>
         </div>
 
