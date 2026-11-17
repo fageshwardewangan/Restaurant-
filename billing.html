@@ -211,6 +211,137 @@
         .unmerge-btn { background: #e11d48; color: white; margin-top: 8px; width: 100%; font-size: 13px; padding: 8px; border-radius: 8px; }
         .unmerge-btn:hover { background: #be123c; }
 
+        /* Menu Management Styles */
+        .add-menu-form {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            align-items: end;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
+        }
+        .form-control { display: flex; flex-direction: column; gap: 6px; }
+        .form-control label { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+        .form-control input, .form-control select {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            background: #f8fafc;
+        }
+        .form-control input:focus, .form-control select:focus { border-color: var(--primary); background: #fff; }
+        .add-item-btn {
+            background: var(--primary);
+            color: white;
+            padding: 11px 16px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .add-item-btn:hover { background: var(--primary-dark); }
+
+        .menu-item-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 18px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 12px;
+            transition: transform 0.2s;
+        }
+        .menu-item-card.unavailable {
+            opacity: 0.72;
+            background: #f1f5f9;
+            border-top: 5px solid var(--danger);
+        }
+        .menu-item-card.available {
+            border-top: 5px solid var(--success);
+        }
+        .menu-item-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .cat-tag {
+            font-size: 11px;
+            font-weight: 700;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 3px 8px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        .price-edit-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f8fafc;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+        .price-edit-row input {
+            width: 85px;
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .save-price-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .menu-card-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+            gap: 8px;
+        }
+        .toggle-avail-btn {
+            flex: 1;
+            padding: 8px 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .toggle-avail-btn.is-avail { background: #d1fae5; color: #065f46; }
+        .toggle-avail-btn.not-avail { background: #fee2e2; color: #991b1b; }
+        .del-menu-btn {
+            background: #fee2e2;
+            color: #dc2626;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .del-menu-btn:hover { background: #fecaca; }
+
         /* Customer Visit Accordion List */
         .visit-row {
             background: var(--card-bg);
@@ -329,6 +460,7 @@
             <button class="nav-btn active" onclick="switchTab('tables')">🍽️ Table Status</button>
             <button class="nav-btn" onclick="switchTab('live')">⚡ Live Orders</button>
             <button class="nav-btn" onclick="switchTab('billing')">💳 Pending Billing</button>
+            <button class="nav-btn" onclick="switchTab('menu')">📋 Menu Manage</button>
             <button class="nav-btn" onclick="switchTab('history')">📂 Payment History</button>
             <button class="nav-btn" onclick="switchTab('customers')">👥 Customers</button>
             <button class="nav-btn" onclick="switchTab('reports')">📊 Sales Reports</button>
@@ -365,7 +497,51 @@
             </div>
         </div>
 
-        <!-- 3. Payment History Tab -->
+        <!-- 3. Menu Management Tab (Staff Self-Service Menu Control) -->
+        <div id="menuTab" class="tab-content">
+            <h2 class="section-title">📋 Menu Management (Items, Price & Availability)</h2>
+            
+            <!-- Add New Item Form -->
+            <div class="add-menu-form">
+                <div class="form-control">
+                    <label>🍽️ Dish / Item Name</label>
+                    <input type="text" id="newItemName" placeholder="e.g. Paneer Tikka Masala">
+                </div>
+                <div class="form-control">
+                    <label>💰 Price (₹)</label>
+                    <input type="number" id="newItemPrice" placeholder="e.g. 180">
+                </div>
+                <div class="form-control">
+                    <label>📂 Category</label>
+                    <input type="text" id="newItemCategory" placeholder="e.g. Main Course, Starter, Drinks">
+                </div>
+                <div class="form-control">
+                    <label>🟢 Type</label>
+                    <select id="newItemType">
+                        <option value="Veg">🟢 Veg</option>
+                        <option value="Non-Veg">🔴 Non-Veg</option>
+                    </select>
+                </div>
+                <div class="form-control">
+                    <label>📦 Availability</label>
+                    <select id="newItemAvailable">
+                        <option value="true">✅ Available (In Stock)</option>
+                        <option value="false">❌ Out of Stock</option>
+                    </select>
+                </div>
+                <button class="add-item-btn" onclick="addNewMenuItem()">➕ Naya Item Jodein</button>
+            </div>
+
+            <!-- Search Menu Items -->
+            <input type="text" id="menuSearchInput" class="search-box" placeholder="🔍 Menu item ya category search karein..." oninput="filterMenuItems()">
+
+            <!-- Menu Items List -->
+            <div class="orders-container" id="menuItemsContainer">
+                <div class="no-orders">Menu items load ho rahe hain...</div>
+            </div>
+        </div>
+
+        <!-- 4. Payment History Tab -->
         <div id="historyTab" class="tab-content">
             <h2 class="section-title">📂 Payment History / Completed Orders</h2>
             <input type="text" id="historySearch" class="search-box" placeholder="🔍 Customer name ya mobile number se search karein..." oninput="filterHistory()">
@@ -374,7 +550,7 @@
             </div>
         </div>
 
-        <!-- ✨ 4. Customers Directory & Visit History Tab -->
+        <!-- 5. Customers Directory & Visit History Tab -->
         <div id="customersTab" class="tab-content">
             <div id="customersListView">
                 <h2 class="section-title">👥 Customer Directory & Visit Count</h2>
@@ -393,7 +569,7 @@
             </div>
         </div>
 
-        <!-- 5. Sales Reports Tab (Day-end Sales Summary + Excel/PDF Export) -->
+        <!-- 6. Sales Reports Tab (Day-end Sales Summary + Excel/PDF Export) -->
         <div id="reportsTab" class="tab-content">
             <h2 class="section-title">📊 Day-End Sales Summary & Custom Reports</h2>
             <div class="report-filters">
@@ -417,7 +593,7 @@
                     <input type="date" id="customEndDateInput" onchange="updateReports()">
                 </div>
 
-                <!-- ✨ Download Report Buttons -->
+                <!-- Download Report Buttons -->
                 <div class="export-actions">
                     <button class="btn excel-btn" onclick="downloadReportExcel()">📥 Download Excel</button>
                     <button class="btn pdf-btn" onclick="downloadReportPDF()">📄 Download PDF</button>
@@ -467,6 +643,7 @@
             if (user) {
                 document.getElementById("staffLoginModal").style.display = "none";
                 fetchBillingData();
+                fetchMenuData();
             } else {
                 document.getElementById("staffLoginModal").style.display = "flex";
             }
@@ -495,8 +672,9 @@
         let globalBillingData = {}; 
         let globalHistoryData = {}; 
         let globalLiveOrdersData = {}; 
-        let currentFilteredReportOrders = []; // Store filtered orders for Excel/PDF export
-        let groupedCustomersMap = {}; // Store unique customers and their visit history
+        let globalMenuData = {}; // Store Menu Items from Firebase
+        let currentFilteredReportOrders = []; 
+        let groupedCustomersMap = {}; 
 
         // Tab Switching Logic
         function switchTab(tabName) {
@@ -514,15 +692,19 @@
                 document.querySelector('.nav-btn:nth-child(3)').classList.add('active');
                 document.getElementById('billingTab').classList.add('active');
                 backToBillingList(); 
-            } else if (tabName === 'history') {
+            } else if (tabName === 'menu') {
                 document.querySelector('.nav-btn:nth-child(4)').classList.add('active');
+                document.getElementById('menuTab').classList.add('active');
+                fetchMenuData();
+            } else if (tabName === 'history') {
+                document.querySelector('.nav-btn:nth-child(5)').classList.add('active');
                 document.getElementById('historyTab').classList.add('active');
             } else if (tabName === 'customers') {
-                document.querySelector('.nav-btn:nth-child(5)').classList.add('active');
+                document.querySelector('.nav-btn:nth-child(6)').classList.add('active');
                 document.getElementById('customersTab').classList.add('active');
                 backToCustomersList();
             } else if (tabName === 'reports') {
-                document.querySelector('.nav-btn:nth-child(6)').classList.add('active');
+                document.querySelector('.nav-btn:nth-child(7)').classList.add('active');
                 document.getElementById('reportsTab').classList.add('active');
                 updateReports();
             }
@@ -557,6 +739,204 @@
                 console.error("डेटा फेच करने में एरर:", error);
             }
         }
+
+        // ================= MENU MANAGEMENT LOGIC =================
+        async function fetchMenuData() {
+            const user = firebase.auth().currentUser;
+            if (!user) return;
+
+            try {
+                const token = await user.getIdToken();
+                const res = await fetch(`${FIREBASE_URL}menu.json?auth=${token}`);
+                const data = await res.json();
+                globalMenuData = data && !data.error ? data : {};
+                renderMenuItems(globalMenuData);
+            } catch (error) {
+                console.error("Menu fetch error:", error);
+            }
+        }
+
+        function renderMenuItems(data) {
+            const container = document.getElementById("menuItemsContainer");
+            if (!container) return;
+            container.innerHTML = "";
+
+            const keys = Object.keys(data);
+            if (keys.length === 0) {
+                container.innerHTML = `<div class="no-orders">Menu abhi khali hai. Upar form se naya item jodein!</div>`;
+                return;
+            }
+
+            keys.forEach(id => {
+                const item = data[id];
+                if (!item || !item.name) return;
+
+                const isAvailable = item.available !== false; // default true
+                const cardClass = isAvailable ? 'menu-item-card available' : 'menu-item-card unavailable';
+                const typeIcon = item.type === 'Non-Veg' ? '🔴' : '🟢';
+                const availBtnClass = isAvailable ? 'toggle-avail-btn is-avail' : 'toggle-avail-btn not-avail';
+                const availBtnText = isAvailable ? '✅ Available (Click to Mark Out of Stock)' : '❌ Out of Stock (Click to Make Available)';
+
+                container.innerHTML += `
+                    <div class="${cardClass}">
+                        <div>
+                            <div class="menu-item-top">
+                                <div>
+                                    <h3 style="font-size: 16px; font-weight: 700;">${typeIcon} ${item.name}</h3>
+                                    <span class="cat-tag">${item.category || 'General'}</span>
+                                </div>
+                                <span style="font-weight: 800; font-size: 16px; color: var(--primary);">₹${item.price}</span>
+                            </div>
+                        </div>
+
+                        <div class="price-edit-row">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">Price ₹:</span>
+                            <input type="number" id="price-input-${id}" value="${item.price}">
+                            <button class="save-price-btn" onclick="updateMenuItemPrice('${id}')">Update Price</button>
+                        </div>
+
+                        <div class="menu-card-actions">
+                            <button class="${availBtnClass}" onclick="toggleMenuItemAvailability('${id}', ${!isAvailable})">${availBtnText}</button>
+                            <button class="del-menu-btn" onclick="deleteMenuItem('${id}', '${item.name.replace(/'/g, "\\'")}')">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterMenuItems() {
+            const query = document.getElementById("menuSearchInput").value.toLowerCase().trim();
+            if (!query) {
+                renderMenuItems(globalMenuData);
+                return;
+            }
+            let filtered = {};
+            Object.keys(globalMenuData).forEach(id => {
+                const item = globalMenuData[id];
+                if (item && (
+                    (item.name && item.name.toLowerCase().includes(query)) ||
+                    (item.category && item.category.toLowerCase().includes(query))
+                )) {
+                    filtered[id] = item;
+                }
+            });
+            renderMenuItems(filtered);
+        }
+
+        async function addNewMenuItem() {
+            const user = firebase.auth().currentUser;
+            if (!user) return;
+
+            const name = document.getElementById("newItemName").value.trim();
+            const price = parseFloat(document.getElementById("newItemPrice").value);
+            const category = document.getElementById("newItemCategory").value.trim() || "Main Course";
+            const type = document.getElementById("newItemType").value;
+            const available = document.getElementById("newItemAvailable").value === "true";
+
+            if (!name || isNaN(price) || price <= 0) {
+                alert("Kripya item ka sahi naam aur price (₹) darj karein!");
+                return;
+            }
+
+            try {
+                const token = await user.getIdToken();
+                const newItem = {
+                    name: name,
+                    price: price,
+                    category: category,
+                    type: type,
+                    available: available,
+                    updatedAt: Date.now()
+                };
+
+                const res = await fetch(`${FIREBASE_URL}menu.json?auth=${token}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(newItem)
+                });
+
+                if (res.ok) {
+                    document.getElementById("newItemName").value = "";
+                    document.getElementById("newItemPrice").value = "";
+                    alert(`✅ "${name}" menu mein jodh diya gaya hai!`);
+                    fetchMenuData();
+                } else {
+                    alert("❌ Item add karne mein dikkat aayi. Firebase Rules check karein.");
+                }
+            } catch (error) {
+                alert("Error: " + error.message);
+            }
+        }
+
+        async function updateMenuItemPrice(itemId) {
+            const user = firebase.auth().currentUser;
+            if (!user) return;
+
+            const newPrice = parseFloat(document.getElementById(`price-input-${itemId}`).value);
+            if (isNaN(newPrice) || newPrice <= 0) {
+                alert("Kripya sahi price darj karein!");
+                return;
+            }
+
+            try {
+                const token = await user.getIdToken();
+                const res = await fetch(`${FIREBASE_URL}menu/${itemId}.json?auth=${token}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ price: newPrice, updatedAt: Date.now() })
+                });
+
+                if (res.ok) {
+                    alert("💰 Price update ho gaya!");
+                    fetchMenuData();
+                }
+            } catch (error) {
+                alert("Error updating price: " + error.message);
+            }
+        }
+
+        async function toggleMenuItemAvailability(itemId, newStatus) {
+            const user = firebase.auth().currentUser;
+            if (!user) return;
+
+            try {
+                const token = await user.getIdToken();
+                const res = await fetch(`${FIREBASE_URL}menu/${itemId}.json?auth=${token}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ available: newStatus, updatedAt: Date.now() })
+                });
+
+                if (res.ok) {
+                    fetchMenuData();
+                }
+            } catch (error) {
+                alert("Error updating availability: " + error.message);
+            }
+        }
+
+        async function deleteMenuItem(itemId, itemName) {
+            const user = firebase.auth().currentUser;
+            if (!user) return;
+
+            if (!confirm(`Kya aap sach mein "${itemName}" ko menu se permanently delete karna chahte hain?`)) {
+                return;
+            }
+
+            try {
+                const token = await user.getIdToken();
+                const res = await fetch(`${FIREBASE_URL}menu/${itemId}.json?auth=${token}`, {
+                    method: "DELETE"
+                });
+
+                if (res.ok) {
+                    fetchMenuData();
+                }
+            } catch (error) {
+                alert("Error deleting item: " + error.message);
+            }
+        }
+        // =========================================================
 
         // Render 1 to 10 Tables Status Function
         function renderTableStatuses() {
@@ -1060,7 +1440,7 @@
             `;
         }
 
-        // ✨ Build Unique Customers Directory from History Data
+        // Build Unique Customers Directory from History Data
         function buildCustomerDirectory() {
             groupedCustomersMap = {};
             const keys = Object.keys(globalHistoryData).reverse();
@@ -1072,7 +1452,6 @@
                 const cleanName = order.customerName.trim();
                 const cleanPhone = (order.customerPhone && order.customerPhone !== 'N/A') ? order.customerPhone.trim() : 'No Mobile';
                 
-                // Unique Key: Mobile Number (if present) or Name + Phone
                 const uniqueKey = cleanPhone !== 'No Mobile' ? cleanPhone : cleanName.toLowerCase();
 
                 if (!groupedCustomersMap[uniqueKey]) {
@@ -1342,14 +1721,13 @@
             }
         }
 
-        // ✨ Export Custom Filtered Report to Excel (.xlsx)
+        // Export Custom Filtered Report to Excel (.xlsx)
         function downloadReportExcel() {
             if (!currentFilteredReportOrders || currentFilteredReportOrders.length === 0) {
                 alert("Download karne ke liye is filter range mein koi order nahi hai!");
                 return;
             }
 
-            const rangeLabel = document.getElementById("reportRange").options[document.getElementById("reportRange").selectedIndex].text;
             let excelData = currentFilteredReportOrders.map((ord, index) => {
                 let itemsSummary = (ord.items || []).map(i => `${i.name} (x${i.quantity})`).join(", ");
                 return {
@@ -1364,7 +1742,6 @@
                 };
             });
 
-            // Grand Total Row
             let grandTotal = currentFilteredReportOrders.reduce((sum, o) => sum + Number(o.totalBill || 0), 0);
             excelData.push({
                 "S.No": "",
@@ -1383,7 +1760,7 @@
             XLSX.writeFile(workbook, `Sales_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
-        // ✨ Export Custom Filtered Report to PDF (.pdf)
+        // Export Custom Filtered Report to PDF (.pdf)
         function downloadReportPDF() {
             if (!currentFilteredReportOrders || currentFilteredReportOrders.length === 0) {
                 alert("Download karne ke liye is filter range mein koi order nahi hai!");
