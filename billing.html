@@ -122,7 +122,7 @@
         .table-badge { background: var(--primary-light); color: var(--primary); padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 12px; }
         .order-time { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
         
-        /* ✨ Counter Note Box Style */
+        /* Counter Note Box Style */
         .counter-note-box {
             background: #fefce8;
             border: 1px solid #fde047;
@@ -151,6 +151,9 @@
         
         .merge-btn { background: #7c3aed; color: white; margin-top: 10px; width: 100%; font-size: 13px; padding: 10px; border-radius: 8px; }
         .merge-btn:hover { background: #6d28d9; }
+
+        .unmerge-btn { background: #e11d48; color: white; margin-top: 8px; width: 100%; font-size: 13px; padding: 8px; border-radius: 8px; }
+        .unmerge-btn:hover { background: #be123c; }
 
         /* Search Bar & Filters */
         .search-box { 
@@ -441,7 +444,6 @@
                 itemsHTML += `<li><span>${i.name} (x${i.quantity})</span><span class="item-qty">₹${i.subtotal}</span></li>`;
             });
 
-            // ✨ Render note in Live order card if available
             let noteHTML = "";
             if (order.customerNote && order.customerNote !== 'N/A') {
                 noteHTML = `<div class="counter-note-box">📝 <b>Note:</b> ${order.customerNote}</div>`;
@@ -499,10 +501,16 @@
                         itemsHTML += `<li><span>${i.name} (x${i.quantity})</span><span class="item-qty">₹${i.subtotal}</span></li>`;
                     });
 
-                    // ✨ Render note in Pending Billing card if available
                     let noteHTML = "";
                     if (order.customerNote && order.customerNote !== 'N/A') {
                         noteHTML = `<div class="counter-note-box">📝 <b>Note:</b> ${order.customerNote}</div>`;
+                    }
+
+                    // ✨ Agar order merged hai, toh unmerge button bhi dikhayein
+                    let unmergeBtnHTML = "";
+                    if (order.originalOrders && Array.isArray(order.originalOrders) && order.originalOrders.length > 0) {
+                        const originalOrdersStr = encodeURIComponent(JSON.stringify(order.originalOrders));
+                        unmergeBtnHTML = `<button class="btn unmerge-btn" onclick="event.stopPropagation(); unmergeOrder('${id}', JSON.parse(decodeURIComponent('${originalOrdersStr}')))">🔓 Unmerge Orders (Alag Karein)</button>`;
                     }
 
                     container.innerHTML += `
@@ -518,6 +526,7 @@
                                 <div class="order-time">⏰ ${order.orderTime}</div>
                                 ${noteHTML}
                                 <ul class="item-list">${itemsHTML}</ul>
+                                ${unmergeBtnHTML}
                             </div>
                             <div>
                                 <div class="order-footer" style="margin-top: 5px;">
@@ -562,12 +571,20 @@
                 let mergedItems = [];
                 let grandTotal = 0;
                 let firstOrder = null;
+                let originalOrdersArray = [];
 
                 for (let id of orderIds) {
                     const order = globalBillingData[id];
                     if (order) {
                         if (!firstOrder) firstOrder = order;
                         grandTotal += Number(order.totalBill || 0);
+                        
+                        // Save original order data for unmerging later
+                        originalOrdersArray.push({
+                            id: id,
+                            data: order
+                        });
+
                         if (order.items) {
                             order.items.forEach(item => {
                                 let existing = mergedItems.find(i => i.name === item.name);
@@ -590,7 +607,8 @@
                     items: mergedItems,
                     totalBill: grandTotal,
                     orderTime: firstOrder.orderTime + " (Merged)",
-                    customerNote: firstOrder.customerNote || 'N/A'
+                    customerNote: firstOrder.customerNote || 'N/A',
+                    originalOrders: originalOrdersArray // Store original items/orders for unmerging
                 };
 
                 await fetch(`${FIREBASE_URL}billing/${mergedOrderId}.json?auth=${token}`, {
@@ -610,6 +628,40 @@
 
             } catch (error) {
                 alert("Error merging orders: " + error.message);
+            }
+        }
+
+        // ✨ Unmerge Order Function to restore original orders
+        async function unmergeOrder(mergedId, originalOrdersArray) {
+            const user = firebase.auth().currentUser;
+            if (!user) return;
+
+            if (!confirm("Kya aap is merged order ko wapas alag-alag (unmerge) karna chahte hain?")) {
+                return;
+            }
+
+            try {
+                const token = await user.getIdToken();
+
+                // Restore each original order back to Firebase billing
+                for (let orig of originalOrdersArray) {
+                    await fetch(`${FIREBASE_URL}billing/${orig.id}.json?auth=${token}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(orig.data)
+                    });
+                }
+
+                // Delete the merged order
+                await fetch(`${FIREBASE_URL}billing/${mergedId}.json?auth=${token}`, {
+                    method: "DELETE"
+                });
+
+                alert("🔓 Orders successfully unmerge ho gaye hain!");
+                fetchBillingData();
+
+            } catch (error) {
+                alert("Error unmerging orders: " + error.message);
             }
         }
 
