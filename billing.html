@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Billing & Payment Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Excel (SheetJS) & PDF (jsPDF + AutoTable) Libraries for Report Download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
     <style>
         :root {
             --primary: #4f46e5;
@@ -13,6 +19,7 @@
             --success: #10b981;
             --success-dark: #059669;
             --warning: #f59e0b;
+            --danger: #ef4444;
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
             --text-main: #0f172a;
@@ -98,6 +105,48 @@
 
         .orders-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
         
+        /* Tables Status Grid Style */
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+        .table-status-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+        .table-status-card:hover { transform: translateY(-2px); }
+        .table-status-card.available { border-top: 6px solid var(--success); }
+        .table-status-card.booked { border-top: 6px solid var(--danger); }
+
+        .table-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .table-name { font-size: 16px; font-weight: 700; color: var(--text-main); }
+        .status-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        .status-badge.free { background: #d1fae5; color: #065f46; }
+        .status-badge.occupied { background: #fee2e2; color: #991b1b; }
+
+        .table-card-body { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
+        .table-card-body p { margin-bottom: 4px; }
+        
         .order-card { 
             background: var(--card-bg); 
             border-radius: 16px; 
@@ -117,9 +166,11 @@
         
         .billing-card { border-top: 5px solid var(--warning); cursor: pointer; }
         .history-card { border-top: 5px solid var(--success); background: #fafafa; }
+        .customer-card { border-top: 5px solid #0ea5e9; cursor: pointer; }
         
         .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
         .table-badge { background: var(--primary-light); color: var(--primary); padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 12px; }
+        .visit-badge { background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 12px; }
         .order-time { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
         
         /* Counter Note Box Style */
@@ -149,11 +200,43 @@
         .back-btn { background: var(--text-muted); color: white; margin-bottom: 16px; }
         .back-btn:hover { background: #475569; }
         
+        .excel-btn { background: #16a34a; color: white; display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; }
+        .excel-btn:hover { background: #15803d; }
+        .pdf-btn { background: #dc2626; color: white; display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; }
+        .pdf-btn:hover { background: #b91c1c; }
+
         .merge-btn { background: #7c3aed; color: white; margin-top: 10px; width: 100%; font-size: 13px; padding: 10px; border-radius: 8px; }
         .merge-btn:hover { background: #6d28d9; }
 
         .unmerge-btn { background: #e11d48; color: white; margin-top: 8px; width: 100%; font-size: 13px; padding: 8px; border-radius: 8px; }
         .unmerge-btn:hover { background: #be123c; }
+
+        /* Customer Visit Accordion List */
+        .visit-row {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .visit-row-header {
+            padding: 14px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            background: #ffffff;
+            transition: background 0.15s ease;
+        }
+        .visit-row-header:hover { background: #f8fafc; }
+        .visit-row-details {
+            display: none;
+            padding: 14px 18px;
+            background: #f8fafc;
+            border-top: 1px dashed var(--border-color);
+        }
+        .visit-row-details.open { display: block; }
 
         /* Search Bar & Filters */
         .search-box { 
@@ -178,7 +261,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 15px;
-            align-items: center;
+            align-items: flex-end;
         }
         .filter-group { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 160px; }
         .filter-group label { font-size: 12px; font-weight: 700; color: var(--text-muted); }
@@ -189,6 +272,12 @@
             font-size: 14px;
             outline: none;
             background: #f8fafc;
+        }
+
+        .export-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         .stats-grid {
@@ -237,14 +326,24 @@
     <div class="container">
         <!-- Top Navigation Menu Tabs -->
         <div class="nav-tabs">
-            <button class="nav-btn active" onclick="switchTab('live')">⚡ Live Orders</button>
+            <button class="nav-btn active" onclick="switchTab('tables')">🍽️ Table Status</button>
+            <button class="nav-btn" onclick="switchTab('live')">⚡ Live Orders</button>
             <button class="nav-btn" onclick="switchTab('billing')">💳 Pending Billing</button>
             <button class="nav-btn" onclick="switchTab('history')">📂 Payment History</button>
+            <button class="nav-btn" onclick="switchTab('customers')">👥 Customers</button>
             <button class="nav-btn" onclick="switchTab('reports')">📊 Sales Reports</button>
         </div>
 
+        <!-- 0. Table Status Tab (1 to 10 Tables Live View) -->
+        <div id="tablesTab" class="tab-content active">
+            <h2 class="section-title">🍽️ Tables Status (1 to 10 Live Overview)</h2>
+            <div class="tables-grid" id="tablesGridContainer">
+                <div class="no-orders">Tables status load ho raha hai...</div>
+            </div>
+        </div>
+
         <!-- 1. Live Orders Tab -->
-        <div id="liveTab" class="tab-content active">
+        <div id="liveTab" class="tab-content">
             <h2 class="section-title">⚡ Live Orders (Kitchen Counter)</h2>
             <div class="orders-container" id="liveOrdersContainer">
                 <div class="no-orders">लाइव ऑर्डर्स लोड हो रहे हैं...</div>
@@ -275,9 +374,28 @@
             </div>
         </div>
 
-        <!-- 4. Sales Reports Tab (Day-end Sales Summary) -->
+        <!-- ✨ 4. Customers Directory & Visit History Tab -->
+        <div id="customersTab" class="tab-content">
+            <div id="customersListView">
+                <h2 class="section-title">👥 Customer Directory & Visit Count</h2>
+                <input type="text" id="customerSearch" class="search-box" placeholder="🔍 Customer ka naam ya mobile number search karein..." oninput="filterCustomers()">
+                <div class="orders-container" id="customersDirectoryContainer">
+                    <div class="no-orders">Customers ka data load ho raha hai...</div>
+                </div>
+            </div>
+
+            <!-- Selected Customer Visit Details View -->
+            <div id="customerDetailView" style="display: none;">
+                <button class="btn back-btn" onclick="backToCustomersList()">⬅ Sabhi Customers Par Wapas Jayein</button>
+                <div id="customerProfileHeader" style="background: var(--card-bg); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;"></div>
+                <h3 class="section-title" style="font-size: 16px;">📅 Visit Dates & Order Records (Details dekhne ke liye click karein)</h3>
+                <div id="customerVisitsContainer"></div>
+            </div>
+        </div>
+
+        <!-- 5. Sales Reports Tab (Day-end Sales Summary + Excel/PDF Export) -->
         <div id="reportsTab" class="tab-content">
-            <h2 class="section-title">📊 Day-End Sales Summary & Reports</h2>
+            <h2 class="section-title">📊 Day-End Sales Summary & Custom Reports</h2>
             <div class="report-filters">
                 <div class="filter-group">
                     <label>⏱️ Time Range Filter</label>
@@ -297,6 +415,12 @@
                 <div class="filter-group custom-date-fields" id="customEndDateGroup" style="display: none;">
                     <label>📅 End Date (Kab tak)</label>
                     <input type="date" id="customEndDateInput" onchange="updateReports()">
+                </div>
+
+                <!-- ✨ Download Report Buttons -->
+                <div class="export-actions">
+                    <button class="btn excel-btn" onclick="downloadReportExcel()">📥 Download Excel</button>
+                    <button class="btn pdf-btn" onclick="downloadReportPDF()">📄 Download PDF</button>
                 </div>
             </div>
 
@@ -370,24 +494,35 @@
 
         let globalBillingData = {}; 
         let globalHistoryData = {}; 
+        let globalLiveOrdersData = {}; 
+        let currentFilteredReportOrders = []; // Store filtered orders for Excel/PDF export
+        let groupedCustomersMap = {}; // Store unique customers and their visit history
 
         // Tab Switching Logic
         function switchTab(tabName) {
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
 
-            if (tabName === 'live') {
+            if (tabName === 'tables') {
                 document.querySelector('.nav-btn:nth-child(1)').classList.add('active');
+                document.getElementById('tablesTab').classList.add('active');
+                renderTableStatuses();
+            } else if (tabName === 'live') {
+                document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
                 document.getElementById('liveTab').classList.add('active');
             } else if (tabName === 'billing') {
-                document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
+                document.querySelector('.nav-btn:nth-child(3)').classList.add('active');
                 document.getElementById('billingTab').classList.add('active');
                 backToBillingList(); 
             } else if (tabName === 'history') {
-                document.querySelector('.nav-btn:nth-child(3)').classList.add('active');
-                document.getElementById('historyTab').classList.add('active');
-            } else if (tabName === 'reports') {
                 document.querySelector('.nav-btn:nth-child(4)').classList.add('active');
+                document.getElementById('historyTab').classList.add('active');
+            } else if (tabName === 'customers') {
+                document.querySelector('.nav-btn:nth-child(5)').classList.add('active');
+                document.getElementById('customersTab').classList.add('active');
+                backToCustomersList();
+            } else if (tabName === 'reports') {
+                document.querySelector('.nav-btn:nth-child(6)').classList.add('active');
                 document.getElementById('reportsTab').classList.add('active');
                 updateReports();
             }
@@ -402,6 +537,7 @@
 
                 const liveRes = await fetch(`${FIREBASE_URL}orders.json?auth=${token}`);
                 const liveData = await liveRes.json();
+                globalLiveOrdersData = liveData && !liveData.error ? liveData : {};
 
                 const billingRes = await fetch(`${FIREBASE_URL}billing.json?auth=${token}`);
                 const billingData = await billingRes.json();
@@ -411,12 +547,99 @@
                 const historyData = await historyRes.json();
                 globalHistoryData = historyData && !historyData.error ? historyData : {};
 
-                renderLive(liveData && !liveData.error ? liveData : null);
+                renderTableStatuses();
+                renderLive(globalLiveOrdersData);
                 renderBillingList(globalBillingData);
                 renderHistory(globalHistoryData);
+                buildCustomerDirectory();
                 updateReports();
             } catch (error) {
                 console.error("डेटा फेच करने में एरर:", error);
+            }
+        }
+
+        // Render 1 to 10 Tables Status Function
+        function renderTableStatuses() {
+            const container = document.getElementById("tablesGridContainer");
+            if (!container) return;
+            container.innerHTML = "";
+
+            let activeTableMap = {};
+
+            if (globalLiveOrdersData) {
+                Object.keys(globalLiveOrdersData).forEach(id => {
+                    const ord = globalLiveOrdersData[id];
+                    if (ord && ord.tableNumber) {
+                        let rawTable = String(ord.tableNumber).trim();
+                        let tNum = rawTable.replace(/[^0-9]/g, ''); 
+                        if (!tNum) tNum = rawTable.toLowerCase();
+
+                        activeTableMap[tNum] = {
+                            status: 'Occupied (Cooking)',
+                            customerName: ord.customerName || 'N/A',
+                            customerPhone: ord.customerPhone || 'N/A',
+                            orderTime: ord.orderTime || 'N/A',
+                            totalBill: ord.totalBill || 0
+                        };
+                    }
+                });
+            }
+
+            if (globalBillingData) {
+                Object.keys(globalBillingData).forEach(id => {
+                    const ord = globalBillingData[id];
+                    if (ord && ord.tableNumber) {
+                        let rawTable = String(ord.tableNumber).trim();
+                        let tNum = rawTable.replace(/[^0-9]/g, ''); 
+                        if (!tNum) tNum = rawTable.toLowerCase();
+
+                        activeTableMap[tNum] = {
+                            status: 'Occupied (Pending Bill)',
+                            customerName: ord.customerName || 'N/A',
+                            customerPhone: ord.customerPhone || 'N/A',
+                            orderTime: ord.orderTime || 'N/A',
+                            totalBill: ord.totalBill || 0
+                        };
+                    }
+                });
+            }
+
+            for (let i = 1; i <= 10; i++) {
+                let tKey = String(i);
+                let tableInfo = activeTableMap[tKey];
+
+                let isBooked = !!tableInfo;
+                let cardClass = isBooked ? 'table-status-card booked' : 'table-status-card available';
+                let badgeClass = isBooked ? 'status-badge occupied' : 'status-badge free';
+                let badgeText = isBooked ? '🔴 Booked' : '🟢 Khali (Available)';
+
+                let bodyHTML = "";
+                if (isBooked) {
+                    bodyHTML = `
+                        <p>👤 <b>Customer:</b> ${tableInfo.customerName}</p>
+                        <p>📱 <b>Mobile:</b> ${tableInfo.customerPhone}</p>
+                        <p>⏰ <b>Time:</b> ${tableInfo.orderTime}</p>
+                        <p style="margin-top: 6px; font-weight: 700; color: var(--primary);">Bill: ₹${tableInfo.totalBill}</p>
+                    `;
+                } else {
+                    bodyHTML = `
+                        <p style="color: var(--text-muted); font-style: italic; margin-top: 10px;">Ye table abhi poori tarah khali hai.</p>
+                    `;
+                }
+
+                container.innerHTML += `
+                    <div class="${cardClass}">
+                        <div>
+                            <div class="table-card-header">
+                                <span class="table-name">Table #${i}</span>
+                                <span class="${badgeClass}">${badgeText}</span>
+                            </div>
+                            <div class="table-card-body">
+                                ${bodyHTML}
+                            </div>
+                        </div>
+                    </div>
+                `;
             }
         }
 
@@ -506,7 +729,6 @@
                         noteHTML = `<div class="counter-note-box">📝 <b>Note:</b> ${order.customerNote}</div>`;
                     }
 
-                    // ✨ Agar order merged hai, toh unmerge button bhi dikhayein
                     let unmergeBtnHTML = "";
                     if (order.originalOrders && Array.isArray(order.originalOrders) && order.originalOrders.length > 0) {
                         const originalOrdersStr = encodeURIComponent(JSON.stringify(order.originalOrders));
@@ -579,7 +801,6 @@
                         if (!firstOrder) firstOrder = order;
                         grandTotal += Number(order.totalBill || 0);
                         
-                        // Save original order data for unmerging later
                         originalOrdersArray.push({
                             id: id,
                             data: order
@@ -608,7 +829,7 @@
                     totalBill: grandTotal,
                     orderTime: firstOrder.orderTime + " (Merged)",
                     customerNote: firstOrder.customerNote || 'N/A',
-                    originalOrders: originalOrdersArray // Store original items/orders for unmerging
+                    originalOrders: originalOrdersArray
                 };
 
                 await fetch(`${FIREBASE_URL}billing/${mergedOrderId}.json?auth=${token}`, {
@@ -631,7 +852,6 @@
             }
         }
 
-        // ✨ Unmerge Order Function to restore original orders
         async function unmergeOrder(mergedId, originalOrdersArray) {
             const user = firebase.auth().currentUser;
             if (!user) return;
@@ -643,7 +863,6 @@
             try {
                 const token = await user.getIdToken();
 
-                // Restore each original order back to Firebase billing
                 for (let orig of originalOrdersArray) {
                     await fetch(`${FIREBASE_URL}billing/${orig.id}.json?auth=${token}`, {
                         method: "PUT",
@@ -652,7 +871,6 @@
                     });
                 }
 
-                // Delete the merged order
                 await fetch(`${FIREBASE_URL}billing/${mergedId}.json?auth=${token}`, {
                     method: "DELETE"
                 });
@@ -842,6 +1060,170 @@
             `;
         }
 
+        // ✨ Build Unique Customers Directory from History Data
+        function buildCustomerDirectory() {
+            groupedCustomersMap = {};
+            const keys = Object.keys(globalHistoryData).reverse();
+
+            keys.forEach(id => {
+                const order = globalHistoryData[id];
+                if (!order || !order.customerName || !order.items) return;
+
+                const cleanName = order.customerName.trim();
+                const cleanPhone = (order.customerPhone && order.customerPhone !== 'N/A') ? order.customerPhone.trim() : 'No Mobile';
+                
+                // Unique Key: Mobile Number (if present) or Name + Phone
+                const uniqueKey = cleanPhone !== 'No Mobile' ? cleanPhone : cleanName.toLowerCase();
+
+                if (!groupedCustomersMap[uniqueKey]) {
+                    groupedCustomersMap[uniqueKey] = {
+                        key: uniqueKey,
+                        name: cleanName,
+                        phone: cleanPhone,
+                        totalVisits: 0,
+                        totalSpent: 0,
+                        lastVisit: order.orderTime || 'N/A',
+                        visits: []
+                    };
+                }
+
+                groupedCustomersMap[uniqueKey].totalVisits += 1;
+                groupedCustomersMap[uniqueKey].totalSpent += Number(order.totalBill || 0);
+                groupedCustomersMap[uniqueKey].visits.push({
+                    orderId: id,
+                    orderTime: order.orderTime || 'N/A',
+                    tableNumber: order.tableNumber || 'N/A',
+                    totalBill: order.totalBill || 0,
+                    items: order.items || [],
+                    customerNote: order.customerNote || 'N/A'
+                });
+            });
+
+            renderCustomerDirectory(Object.values(groupedCustomersMap));
+        }
+
+        function renderCustomerDirectory(customersList) {
+            const container = document.getElementById("customersDirectoryContainer");
+            if (!container) return;
+            container.innerHTML = "";
+
+            if (customersList.length === 0) {
+                container.innerHTML = `<div class="no-orders">Abhi tak kisi customer ki history nahi bani hai.</div>`;
+                return;
+            }
+
+            customersList.forEach(cust => {
+                const safeKey = encodeURIComponent(cust.key);
+                container.innerHTML += `
+                    <div class="order-card customer-card" onclick="openCustomerProfile(decodeURIComponent('${safeKey}'))">
+                        <div>
+                            <div class="order-header">
+                                <div>
+                                    <p style="font-weight: 700; font-size: 16px;">👤 ${cust.name}</p>
+                                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">📱 ${cust.phone}</p>
+                                </div>
+                                <span class="visit-badge">Visits: ${cust.totalVisits}</span>
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+                                <p>🕒 <b>Last Visit:</b> ${cust.lastVisit}</p>
+                                <p style="margin-top: 4px;">💰 <b>Total Spent:</b> <span style="color: var(--success); font-weight: 700;">₹${cust.totalSpent}</span></p>
+                            </div>
+                        </div>
+                        <div class="order-footer" style="padding-top: 10px;">
+                            <span style="font-size: 12px; color: var(--primary); font-weight: 600;">Visit History Dekhein ➔</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterCustomers() {
+            const query = document.getElementById("customerSearch").value.toLowerCase().trim();
+            const allCustomers = Object.values(groupedCustomersMap);
+            const filtered = allCustomers.filter(c => 
+                c.name.toLowerCase().includes(query) || c.phone.toLowerCase().includes(query)
+            );
+            renderCustomerDirectory(filtered);
+        }
+
+        function openCustomerProfile(uniqueKey) {
+            const cust = groupedCustomersMap[uniqueKey];
+            if (!cust) return;
+
+            document.getElementById("customersListView").style.display = "none";
+            document.getElementById("customerDetailView").style.display = "block";
+
+            const header = document.getElementById("customerProfileHeader");
+            header.innerHTML = `
+                <div>
+                    <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main);">👤 ${cust.name}</h2>
+                    <p style="font-size: 14px; color: var(--text-muted); margin-top: 4px;">📱 Mobile: <b>${cust.phone}</b></p>
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <div style="background: #e0f2fe; padding: 10px 16px; border-radius: 12px; text-align: center;">
+                        <span style="font-size: 11px; color: #0369a1; font-weight: 700; display: block;">TOTAL VISITS</span>
+                        <span style="font-size: 18px; font-weight: 800; color: #0284c7;">${cust.totalVisits} Baar</span>
+                    </div>
+                    <div style="background: #d1fae5; padding: 10px 16px; border-radius: 12px; text-align: center;">
+                        <span style="font-size: 11px; color: #065f46; font-weight: 700; display: block;">TOTAL SPENT</span>
+                        <span style="font-size: 18px; font-weight: 800; color: #059669;">₹${cust.totalSpent}</span>
+                    </div>
+                </div>
+            `;
+
+            const visitsContainer = document.getElementById("customerVisitsContainer");
+            visitsContainer.innerHTML = "";
+
+            cust.visits.forEach((visit, index) => {
+                let itemsRows = "";
+                visit.items.forEach(item => {
+                    itemsRows += `
+                        <li style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed var(--border-color); font-size: 14px;">
+                            <span>🍽️ ${item.name} <b>(x${item.quantity})</b></span>
+                            <span style="font-weight: 700; color: var(--primary);">₹${item.subtotal}</span>
+                        </li>
+                    `;
+                });
+
+                let noteHTML = (visit.customerNote && visit.customerNote !== 'N/A') 
+                    ? `<div class="counter-note-box" style="margin-top: 8px;">📝 <b>Note:</b> ${visit.customerNote}</div>` 
+                    : '';
+
+                visitsContainer.innerHTML += `
+                    <div class="visit-row">
+                        <div class="visit-row-header" onclick="toggleVisitDetails('visit-detail-${index}')">
+                            <div>
+                                <span style="font-weight: 700; color: var(--text-main); font-size: 14px;">📅 Visit #${cust.visits.length - index} — ${visit.orderTime}</span>
+                                <span class="table-badge" style="margin-left: 8px;">Table: ${visit.tableNumber}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="font-weight: 800; color: var(--success); font-size: 15px;">₹${visit.totalBill}</span>
+                                <span style="font-size: 12px; color: var(--primary); font-weight: 700;">▼ Items Dekhein</span>
+                            </div>
+                        </div>
+                        <div class="visit-row-details" id="visit-detail-${index}">
+                            <p style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px;">ORDERED ITEMS:</p>
+                            <ul style="list-style: none;">${itemsRows}</ul>
+                            ${noteHTML}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleVisitDetails(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.classList.toggle('open');
+            }
+        }
+
+        function backToCustomersList() {
+            document.getElementById("customerDetailView").style.display = "none";
+            document.getElementById("customersListView").style.display = "block";
+            buildCustomerDirectory();
+        }
+
         async function paymentDone(orderId, finalPayable, useGst, taxAmount) {
             const user = firebase.auth().currentUser;
             if (!user) return;
@@ -902,6 +1284,7 @@
 
             const keys = Object.keys(globalHistoryData);
             if (keys.length === 0) {
+                currentFilteredReportOrders = [];
                 document.getElementById("reportTotalRevenue").innerText = "₹0";
                 document.getElementById("reportTotalOrders").innerText = "0";
                 container.innerHTML = `<div class="no-orders">Koi sales data uplabdh nahi hai.</div>`;
@@ -941,9 +1324,12 @@
                 return true;
             });
 
+            currentFilteredReportOrders = [];
             let totalRev = 0;
+
             filteredKeys.forEach(id => {
                 const order = globalHistoryData[id];
+                currentFilteredReportOrders.push(order);
                 totalRev += Number(order.totalBill || 0);
                 container.innerHTML += createHistoryCard(id, order);
             });
@@ -954,6 +1340,93 @@
             if (filteredKeys.length === 0) {
                 container.innerHTML = `<div class="no-orders">Is range ke liye koi order nahi mila.</div>`;
             }
+        }
+
+        // ✨ Export Custom Filtered Report to Excel (.xlsx)
+        function downloadReportExcel() {
+            if (!currentFilteredReportOrders || currentFilteredReportOrders.length === 0) {
+                alert("Download karne ke liye is filter range mein koi order nahi hai!");
+                return;
+            }
+
+            const rangeLabel = document.getElementById("reportRange").options[document.getElementById("reportRange").selectedIndex].text;
+            let excelData = currentFilteredReportOrders.map((ord, index) => {
+                let itemsSummary = (ord.items || []).map(i => `${i.name} (x${i.quantity})`).join(", ");
+                return {
+                    "S.No": index + 1,
+                    "Customer Name": ord.customerName || "N/A",
+                    "Mobile Number": ord.customerPhone || "N/A",
+                    "Table": ord.tableNumber || "N/A",
+                    "Date & Time": ord.orderTime || "N/A",
+                    "Ordered Items": itemsSummary,
+                    "GST Amount (₹)": ord.taxAmount ? Number(ord.taxAmount).toFixed(2) : 0,
+                    "Total Bill (₹)": Number(ord.totalBill || 0)
+                };
+            });
+
+            // Grand Total Row
+            let grandTotal = currentFilteredReportOrders.reduce((sum, o) => sum + Number(o.totalBill || 0), 0);
+            excelData.push({
+                "S.No": "",
+                "Customer Name": "TOTAL REVENUE",
+                "Mobile Number": "",
+                "Table": "",
+                "Date & Time": "",
+                "Ordered Items": `Total Orders: ${currentFilteredReportOrders.length}`,
+                "GST Amount (₹)": "",
+                "Total Bill (₹)": grandTotal
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Sales Report");
+            XLSX.writeFile(workbook, `Sales_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        // ✨ Export Custom Filtered Report to PDF (.pdf)
+        function downloadReportPDF() {
+            if (!currentFilteredReportOrders || currentFilteredReportOrders.length === 0) {
+                alert("Download karne ke liye is filter range mein koi order nahi hai!");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const rangeLabel = document.getElementById("reportRange").options[document.getElementById("reportRange").selectedIndex].text;
+            const totalRev = document.getElementById("reportTotalRevenue").innerText;
+            const totalOrders = document.getElementById("reportTotalOrders").innerText;
+
+            doc.setFontSize(16);
+            doc.text(`${RESTAURANT_NAME} - Sales Report`, 14, 18);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Filter: ${rangeLabel} | Generated on: ${new Date().toLocaleString()}`, 14, 25);
+            doc.text(`Total Orders: ${totalOrders} | Total Revenue: Rs. ${totalRev.replace('₹', '')}`, 14, 31);
+
+            const tableRows = currentFilteredReportOrders.map((ord, index) => {
+                let itemsSummary = (ord.items || []).map(i => `${i.name} (x${i.quantity})`).join(", ");
+                return [
+                    index + 1,
+                    ord.customerName || "N/A",
+                    ord.customerPhone || "N/A",
+                    ord.tableNumber || "N/A",
+                    ord.orderTime || "N/A",
+                    itemsSummary,
+                    `Rs. ${ord.totalBill || 0}`
+                ];
+            });
+
+            doc.autoTable({
+                startY: 36,
+                head: [['#', 'Customer', 'Mobile', 'Table', 'Date/Time', 'Items', 'Amount']],
+                body: tableRows,
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [79, 70, 229] }
+            });
+
+            doc.save(`Sales_Report_${new Date().toISOString().slice(0,10)}.pdf`);
         }
 
         // --- 58mm Thermal Printer Optimized Print Function ---
